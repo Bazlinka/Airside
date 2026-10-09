@@ -10,6 +10,13 @@ evidence needs a current player. Select relevant features first; full journeys o
 when lifecycle risk warrants them. Broad suites/performance/long soaks remain on request.
 Report unverified Unity behaviour. Merge completed authorised work without asking again.
 
+## Diagnose a reported game issue
+Follow the root reported-issue workflow: reproduce with `scripts/diagnose-game.py`,
+inspect actual frames/state/errors, find the cause, fix, then rerun the same scenario
+on the fixed pushed SHA. Linux agents automatically dispatch to the private Mac
+runner. Use custom scenarios for exact reproduction; a smoke/capture pass is not a
+diagnosis. Record before/after evidence and genuine blockers.
+
 ## Add or change a C# file
 1. Put it in the layer that fits: `Domain` / `Simulation` (no `UnityEngine`), `Presentation` (may use it), `Editor`, `Tests/EditMode` (see `game/Airside/AGENTS.md`).
 2. New file → `python3 scripts/new-meta.py <path>` (every file and folder under `Assets/` needs a `.meta`).

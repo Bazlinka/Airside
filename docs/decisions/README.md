@@ -333,6 +333,7 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-09 | [Established arrivals retain physical presence when estimates are postponed](2026-10-09-established-arrival-holding-presence.md) | Accepted — Bailey's no-disappearing-aircraft instruction |
 | 2026-10-09 | [Flight tracker and per-view HUD layout](2026-10-09-flight-tracker-and-hud-views.md) | layout, painter, step logic and visibility rules covered by headless t |
 | 2026-10-09 | [Ground character and restrained surface wear](2026-10-09-ground-character.md) | Accepted — Bailey requested a less perfect, more authentic ground/worl |
+| 2026-10-09 | [Issue-driven real-game diagnosis and Mac bridge](2026-10-09-issue-diagnostics-mac-bridge.md) | Implemented; end-to-end verification in progress. |
 | 2026-10-09 | [Linear colour rendering](2026-10-09-linear-colour-rendering.md) | Accepted — Bailey authorised the recommended first renderer improvemen |
 | 2026-10-09 | [Parked aircraft activity window](2026-10-09-parked-aircraft-activity-window.md) | Accepted — Bailey's parked-aircraft proposal and instruction to contin |
 | 2026-10-09 | [Physical ground detail on verges, drains and pavement edges](2026-10-09-physical-ground-detail.md) | Accepted — Bailey authorised the next environment improvements. |

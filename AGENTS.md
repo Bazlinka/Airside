@@ -141,6 +141,30 @@ requirements. Bailey's latest task instructions take precedence.
   establish a Unity compile, rendered playtest, packaged build or performance pass.
   Preserve simulation, save compatibility and other tools' active work.
 
+## Reported-issue diagnostic workflow
+
+When Bailey reports a game issue, automatically investigate it in the real game:
+1. Record the symptom and expected behaviour. Inspect source/context to choose a
+   reproducible scenario; commit/push the scoped revision before native execution.
+2. Run `python3 scripts/diagnose-game.py --issue "<reported problem>"` (local Mac);
+   Linux agents automatically dispatch to the private Mac runner. `--remote` forces
+   that path. Use `--scenario <JSON>` for precise/custom steps and `--aircraft-type`
+   for the affected model. Do not substitute unrelated smoke checks for reproduction.
+3. Open relevant returned PNGs and read player logs, fleet/camera/weather state and
+   runtime errors. Determine reproduced/not reproduced/blocked; gather another probe
+   if evidence is insufficient. A successful capture is not a diagnosis or visual pass.
+4. Identify the cause, make the narrow fix, commit/push it, and rerun the identical
+   scenario on the fix revision. Inspect before/after evidence and relevant regressions.
+5. Report cause, fix, observed result and limits; keep evidence references in the PR
+   or testing record. If the Mac runner/licence is unavailable, report the real blocker
+   and request/run the diagnostic job; do not treat Linux as the end of investigation.
+   Do not invent a visual fix or a pass without evidence.
+
+The private Mac workflow is `agent-diagnostics.yml`; downloaded evidence is under
+`work/remote-diagnostics/`. Mac checkout/saves are isolated. The runner requires an
+awake logged-in Mac and authenticated repository access; it cannot run while offline.
+See `docs/testing/agent-gameplay/README.md`. No ordinary player control is added.
+
 ## Git workflow (all tools follow this)
 
 1. **Start clean:** `git pull --rebase origin main` before touching anything.

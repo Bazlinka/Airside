@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Globalization;
 using System.Linq;
 using Airside.Domain;
 using Airside.Simulation;
@@ -30,6 +31,7 @@ namespace Airside.Presentation
         private AgentGameplayPlan _agentGameplayPlan;
         private readonly List<AgentGameplayResult> _agentGameplayResults = new();
         private string _agentGameplayError;
+        private readonly List<string> _agentRuntimeErrors = new();
         private float _agentGameplayStarted;
         private static string AgentGameplaySavePath
         {
@@ -49,12 +51,12 @@ namespace Airside.Presentation
         [Serializable] private sealed class AgentGameplayPlan
         {
             public int protocol;
-            public string expectedCommit;
+            public string expectedCommit, issue, aircraftType;
             public AgentGameplayStep[] steps;
         }
         [Serializable] private sealed class AgentGameplayStep
         {
-            public string id, action, value;
+            public string id, action, value, expectState;
             public bool capture;
             public float settleSeconds;
         }
@@ -63,6 +65,9 @@ namespace Airside.Presentation
             public string id, action, status, detail, screenshot;
             public float realSeconds;
             public long simulationSeconds;
+            public string aircraft, state, weather, workspace;
+            public string[] fleetStates;
+            public float cameraPitch, cameraYaw, cameraDistance;
         }
         [Serializable] private sealed class AgentGameplayReport
         {
@@ -70,6 +75,9 @@ namespace Airside.Presentation
             public string status, error, commit, savePath;
             public bool dirty;
             public AgentGameplayResult[] steps;
+            public string[] runtimeErrors;
+            public float p95FrameMs, worstFrameMs;
+            public int measuredFrames;
         }
 
         private bool InitializeAgentGameplay()
@@ -92,9 +100,10 @@ namespace Airside.Presentation
                         || !step.id.All(c => char.IsLetterOrDigit(c) || c == '-') || !ids.Add(step.id)
                         || !float.IsFinite(step.settleSeconds) || step.settleSeconds < 0.1f || step.settleSeconds > 15f)
                         throw new ArgumentException("Invalid step ID or settle duration");
-                    if (!new[] { "workspace", "planner", "book", "cancel", "save", "follow", "view", "overview", "menu", "weather" }.Contains(step.action))
+                    if (!new[] { "workspace", "planner", "book", "cancel", "save", "follow", "view", "overview", "menu", "weather", "time", "camera", "snapshot" }.Contains(step.action))
                         throw new ArgumentException("Unknown agent gameplay action: " + step.action);
                 }
+                Application.logMessageReceived += RecordAgentRuntimeError;
                 _agentGameplayPlan = plan;
                 _agentGameplayActive = true;
                 _agentGameplayStarted = Time.realtimeSinceStartup;
@@ -115,7 +124,9 @@ namespace Airside.Presentation
             // Let initial fleet views and HUD populate before selecting a subject.
             yield return new WaitForSecondsRealtime(2);
             _agentGameplayAircraft = _operations.FleetOf(_operations.PlayerAirline)
-                .FirstOrDefault(a => a.State == FleetState.AtStand && !a.Type.IsRotorcraft);
+                .FirstOrDefault(a => a.State == FleetState.AtStand
+                    && (string.IsNullOrEmpty(_agentGameplayPlan.aircraftType) ? !a.Type.IsRotorcraft
+                        : a.Type.Id == _agentGameplayPlan.aircraftType));
             if (_agentGameplayAircraft == null) _agentGameplayError = "No parked test aircraft";
             foreach (var step in _agentGameplayPlan.steps)
             {
@@ -138,17 +149,31 @@ namespace Airside.Presentation
                         Path.Combine(Path.GetDirectoryName(AgentGameplayPlanPath), result.screenshot), ok => captured = ok);
                     if (!captured) { _agentGameplayError = "Screenshot failed: " + step.id; break; }
                 }
+                result.fleetStates = _operations.Fleet.Select(a => a.Registration + " " + a.State + " trips " + a.CompletedTrips).ToArray();
+                result.aircraft = _agentGameplayAircraft.Registration;
+                result.state = _agentGameplayAircraft.State.ToString();
+                result.weather = CurrentWeather.ToString();
+                result.workspace = _activeWorkspace.ToString();
+                result.cameraPitch = AirsideCameraController.CurrentPitch;
+                result.cameraYaw = AirsideCameraController.CurrentYaw;
+                result.cameraDistance = AirsideCameraController.CurrentDistance;
+                if (_agentRuntimeErrors.Count > 0)
+                { _agentGameplayError = "Runtime error during scenario"; result.detail = _agentGameplayError; break; }
                 result.status = "passed";
                 result.realSeconds = Time.realtimeSinceStartup - _agentGameplayStarted;
                 result.simulationSeconds = _clock.Now.ElapsedSeconds;
                 Debug.Log("[Airside agent] PASS " + step.id + " " + result.detail);
             }
+            var frameSamples = _soakFrameMs.Take(_soakFrameSamples).Skip(1).Where(x => x > 0 && float.IsFinite(x)).OrderBy(x => x).ToArray();
             var report = new AgentGameplayReport
             {
                 status = _agentGameplayError == null ? "passed" : "failed",
                 error = _agentGameplayError, commit = BuildIdentityReader.Current.CommitFull,
                 dirty = BuildIdentityReader.Current.Dirty, savePath = AgentGameplaySavePath,
-                steps = _agentGameplayResults.ToArray()
+                steps = _agentGameplayResults.ToArray(), runtimeErrors = _agentRuntimeErrors.ToArray(),
+                measuredFrames = frameSamples.Length,
+                p95FrameMs = frameSamples.Length == 0 ? 0 : frameSamples[(int)((frameSamples.Length - 1) * 0.95)],
+                worstFrameMs = frameSamples.Length == 0 ? 0 : frameSamples[frameSamples.Length - 1]
             };
             try
             {
@@ -157,12 +182,22 @@ namespace Airside.Presentation
                 File.Move(path + ".tmp", path);
             }
             catch (Exception e) { _agentGameplayError = "Cannot write agent report: " + e.Message; }
+            Application.logMessageReceived -= RecordAgentRuntimeError;
             Debug.Log("[Airside agent] COMPLETE " + (_agentGameplayError == null ? "passed" : "failed"));
             Application.Quit(_agentGameplayError == null ? 0 : 2);
         }
 
+        private void RecordAgentRuntimeError(string message, string stack, LogType type)
+        {
+            if ((type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
+                && _agentRuntimeErrors.Count < 100)
+                _agentRuntimeErrors.Add(message + "\n" + stack);
+        }
+
         private void VerifyAgentGameplayState(AgentGameplayStep step)
         {
+            if (!string.IsNullOrEmpty(step.expectState) && _agentGameplayAircraft.State.ToString() != step.expectState)
+                throw new InvalidOperationException("Expected " + step.expectState + "; observed " + _agentGameplayAircraft.State);
             if (step.action == "follow" && !_cameraController.IsFollowing)
                 throw new InvalidOperationException("Follow lost before capture");
             if (step.action == "view" && (!InCockpit || _cockpitAircraftId != _agentGameplayAircraft.Registration
@@ -237,6 +272,20 @@ namespace Airside.Presentation
                 case "menu":
                     _menuOpen = step.value == "open";
                     return _menuOpen ? "Menu open; live airline clock continues" : "Menu closed";
+                case "time":
+                    if (!TimeSpan.TryParseExact(step.value, @"hh\:mm", CultureInfo.InvariantCulture, out var localTime))
+                        throw new ArgumentException("Time must be HH:mm");
+                    ReviewLocalTime = localTime;
+                    return "Visual local time " + step.value;
+                case "camera":
+                    var coordinates = step.value.Split(',');
+                    if (coordinates.Length != 3) throw new ArgumentException("Camera needs pitch,yaw,distance");
+                    var pitch = float.Parse(coordinates[0], CultureInfo.InvariantCulture);
+                    var yaw = float.Parse(coordinates[1], CultureInfo.InvariantCulture);
+                    var distance = float.Parse(coordinates[2], CultureInfo.InvariantCulture);
+                    _cameraController.ApplyAgentReviewPose(pitch, yaw, distance);
+                    return "Camera pose " + step.value;
+                case "snapshot": return "Observed " + aircraft.Registration + " " + aircraft.State;
                 case "weather":
                     if (!Enum.TryParse(step.value, true, out WeatherKind weather)) throw new ArgumentException("Unknown weather");
                     SetReviewWeatherToken(step.value);

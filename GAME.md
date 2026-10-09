@@ -20,12 +20,12 @@ aircraft, simulation or save changes. Geometry checks pass 11/11 and C# syntax p
 Unity appearance/performance unverified. Evidence: `docs/testing/physical-ground-detail-2026-10-09.md`.
 Spatial puddles remain future work.
 
-**Agent gameplay runner (9 Oct, Codex, #696/#702):** agents automatically select necessary
-checks: workspaces/planner, booking/cancellation, saves, cameras and menu in one private-save
-session; full profile adds visual weather and a 40× round trip when warranted. Preview:
-`python3 scripts/agent-gameplay.py --plan`. Reuse a fresh stamped build; build once if needed.
-No player controls/blanket full tests. Nine regressions and C# compile pass; packaged gameplay, visuals/performance unverified.
-Instructions: `docs/testing/agent-gameplay/README.md`; decision `2026-10-09-agent-gameplay-runner`.
+**Issue diagnostics (9 Oct, Codex, #707):** reported issues now require reproduce → inspect
+real frames/state/errors → identify cause → fix → identical-scenario retest. Custom plans,
+weather/time/camera probes and aircraft subjects extend smoke checks. Linux agents use the
+private Mac workflow via `scripts/diagnose-game.py`; dedicated runner is online, user service
+under `~/Developer/Airside-DiagnosticsRunner`. End-to-end native validation in progress;
+captured evidence is not a visual pass. Guide: `docs/testing/agent-gameplay/README.md`.
 
 **Cloud lighting/depth (9 Oct, Codex, #697):** volume clouds now use bounded
 sun-direction/colour scattering, two local sun-density probes and sky fill for

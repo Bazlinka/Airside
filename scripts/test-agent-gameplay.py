@@ -87,5 +87,24 @@ class GameplayRunnerTests(unittest.TestCase):
         full=runner.make_plan(runner.FEATURES,'abc')['steps']
         self.assertEqual(len({s['id'] for s in full}),len(full))
 
+    def test_custom_scenario_rejects_commands_and_unsafe_ids(self):
+        plan=runner.make_plan(['menu'],'abc')
+        plan['steps'][0]['id']='../../save'
+        with self.assertRaises(ValueError):runner.validate_plan(plan,'abc')
+        plan['steps'][0]['id']='safe';plan['steps'][0]['action']='shell'
+        with self.assertRaises(ValueError):runner.validate_plan(plan,'abc')
+
+    def test_issue_probes_weather_and_unknown_issues_need_reproduction(self):
+        plan=runner.issue_plan('cloud weather looks flat','abc')
+        self.assertEqual([s['value'] for s in plan['steps'] if s['action']=='weather'],
+                         ['Clear','Cloudy','Rain','Storm','Fog','Rain'])
+        self.assertIn('camera',[s['action'] for s in plan['steps']])
+        with self.assertRaisesRegex(ValueError,'reproduction'):runner.issue_plan('something is wrong','abc')
+
+    def test_runtime_errors_override_step_passes(self):
+        report=dict(protocol=1,status='passed',runtimeErrors=['shader broken'])
+        with self.assertRaisesRegex(ValueError,'Runtime errors'):
+            runner.validate_report(runner.make_plan(['menu'],'abc'),report,Path('/tmp'))
+
 
 if __name__ == '__main__': unittest.main()

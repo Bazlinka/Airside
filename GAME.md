@@ -7,11 +7,10 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
-**Fleet refinements (9 Oct, Codex, #716):** opened authored intake caps and fitted recessed
-liners; moving control surfaces gain restrained hull-sampled hinge seams, including
-trainer wings/tail. Envelope, pivots, liveries, simulation and saves retained.
-Native fleet baseline inspected; aperture/determinism checks pass. Native after views
-and focused player evidence pending on this branch.
+**Fleet refinements (9 Oct, Codex, #716):** recessed engine mouths and skin-fitted moving control hinges;
+15 active airframes inspected in native front/side/rear/overview, 13 passenger rigs in driven roll poses.
+Envelopes, pivots, paint, simulation and saves retained. 52 focused headless/17 native checks pass;
+packaged player check pending. Evidence/limits: `docs/testing/fleet-refinements-2026-10-09/README.md`.
 
 **Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
 F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;
@@ -252,5 +251,3 @@ contains the current controls and source credits; `README.md` covers first-run s
 Follow AGENTS.md for quick checks and merge policy. Mac build/playtest, device audio
 and flight streaming performance remain unverified until explicitly exercised.
 
-Earlier handoffs and the previous full controls/build/soak notes are preserved
-verbatim in [`docs/history/GAME-handoff-log-through-2026-10-08.md`](docs/history/GAME-handoff-log-through-2026-10-08.md).

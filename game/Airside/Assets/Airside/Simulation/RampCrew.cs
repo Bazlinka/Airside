@@ -30,7 +30,8 @@ namespace Airside.Simulation
         BaggageCart,
         BoardingSupervision,
         PushbackHeadset,
-        WingWalk
+        WingWalk,
+        EquipmentRunner
     }
 
     /// <summary>Whole-turn activities used for arrivals, ambient AI turns and pushback.</summary>
@@ -93,8 +94,8 @@ namespace Airside.Simulation
     /// </summary>
     public static class RampCrew
     {
-        /// <summary>The most workers drawn for one aircraft. Two characters are available.</summary>
-        public const int MaxPerAircraft = 2;
+        /// <summary>The largest service team: four bag carriers and a hold attendant.</summary>
+        public const int MaxPerAircraft = 5;
 
         /// <summary>
         /// Crew for the stage <paramref name="prep"/> is in, appended to <paramref name="into"/>.
@@ -134,7 +135,7 @@ namespace Airside.Simulation
                     return;
             }
 
-            if (activeVehicle is null && into.Count > 1)
+            if (activeVehicle is null && VehicleFor(prep.Stage).HasValue && into.Count > 1)
                 into.RemoveAt(0);
         }
 
@@ -170,6 +171,7 @@ namespace Airside.Simulation
                     // wing-side worker waits at the nose gear with the chocks and cones.
                     Add(RampRole.Marshalling, RampTask.MarshalArrival, 0f, nose + (layout.IsTurboprop ? 8f : 12f), 0f, nose);
                     Add(RampRole.Receiving, RampTask.PlaceSafetyEquipment, -(width + 1.2f), nose - 2.2f, 0f, nose - 2.2f);
+                    Add(RampRole.Receiving, RampTask.PlaceSafetyEquipment, width + 1.2f, nose - 2.2f, 0f, nose - 2.2f);
                     break;
                 case RampActivity.Fuel:
                 {
@@ -177,6 +179,7 @@ namespace Airside.Simulation
                     var coupling = layout.FuelCoupling;
                     Add(RampRole.Attending, RampTask.FuelPanel, truck.X - 1.8f, truck.Z + 1.2f, truck.X, truck.Z);
                     Add(RampRole.Receiving, RampTask.FuelCoupling, coupling.X, coupling.Z, coupling.X - 1f, coupling.Z + 0.5f);
+                    Add(RampRole.Attending, RampTask.EquipmentRunner, truck.X + 2.6f, truck.Z - 2f, truck.X, truck.Z);
                     break;
                 }
                 case RampActivity.Catering:
@@ -196,14 +199,18 @@ namespace Airside.Simulation
                         Add(RampRole.Attending, RampTask.CateringLoader, door.X + side * 2.6f, door.Z + 2.2f, door.X, door.Z);
                         Add(RampRole.Receiving, RampTask.CateringDoor, door.X + side * 1.5f, door.Z - 1.8f, door.X, door.Z);
                     }
+                    var supply = layout.CateringTruck ?? layout.PassengerDoor;
+                    Add(RampRole.Attending, RampTask.EquipmentRunner, supply.X + AircraftLayout.SideOf(supply) * 3.8f,
+                        supply.Z + 3.5f, supply.X, supply.Z);
                     break;
                 case RampActivity.Baggage:
                 {
                     var hold = layout.CargoDoor;
                     var side = AircraftLayout.SideOf(hold);
                     Add(RampRole.Receiving, RampTask.BaggageHold, hold.X + side * 1.3f, hold.Z, hold.X, hold.Z);
-                    Add(RampRole.Attending, RampTask.BaggageCart, hold.X + side * 4.0f,
-                        hold.Z + layout.AwayFromWing(hold.Z) * 2.0f, hold.X, hold.Z);
+                    for (var lane = 0; lane < (layout.IsTurboprop ? 2 : layout.HalfSpan > 25f ? 4 : 3); lane++)
+                        Add(RampRole.Attending, RampTask.BaggageCart, hold.X + side * (6.3f + lane * 0.6f),
+                            hold.Z + 0.9f + lane * 0.85f, hold.X, hold.Z);
                     break;
                 }
                 case RampActivity.Boarding:
@@ -218,12 +225,15 @@ namespace Airside.Simulation
                         var holdSide = AircraftLayout.SideOf(hold);
                         Add(RampRole.Receiving, RampTask.BaggageHold, hold.X + holdSide * 1.3f, hold.Z, hold.X, hold.Z);
                     }
+                    Add(RampRole.Marshalling, RampTask.BoardingSupervision, door.X + side * 5.0f, door.Z + 5.2f, door.X, door.Z);
                     break;
                 }
                 case RampActivity.Pushback:
                     Add(RampRole.Receiving, RampTask.PushbackHeadset, -(width + 1.6f), nose - 1.5f, 0f, nose - 1.5f);
                     Add(RampRole.Marshalling, RampTask.WingWalk, -(layout.HalfSpan + 1.5f), layout.WingMidZ,
                         -(layout.HalfSpan + 1.5f), layout.WingMidZ - 10f);
+                    Add(RampRole.Marshalling, RampTask.WingWalk, layout.HalfSpan + 1.5f, layout.WingMidZ,
+                        layout.HalfSpan + 1.5f, layout.WingMidZ - 10f);
                     break;
             }
 

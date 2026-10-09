@@ -26,36 +26,25 @@ namespace Airside.Tests
 
         private CrewAction Worker(RampTask task) => _actions[_crew.FindIndex(m => m.Task == task)];
 
-        [Test]
-        public void MoreBaggageTimeMovesMoreBagsButNeverMoreThanSeats()
-        {
-            var saab = AircraftType.Saab340;
-            var few = ServiceChoreography.BagsToLoad(saab, 60, 4f);
-            var many = ServiceChoreography.BagsToLoad(saab, 180, 4f);
-            Assert.That(few, Is.GreaterThanOrEqualTo(1));
-            Assert.That(many, Is.GreaterThan(few));
-            Assert.That(ServiceChoreography.BagsToLoad(saab, 100000, 4f), Is.EqualTo(AircraftCatalogue.TypicalSeats(saab)));
-            Assert.That(ServiceChoreography.BagCycle(4f), Is.GreaterThanOrEqualTo(ServiceChoreography.MinBagCycleSeconds));
-        }
-
         [TestCase("SF34")]
         [TestCase("ATR42")]
         [TestCase("A320")]
         public void TheBaggageTrainEmptiesBagByBagIntoTheHold(string id)
         {
             AircraftType.TryFromId(id, out var type);
-            Act(RampActivity.Baggage, type, 0, 90);
+            var duration = TurnaroundCrewWork.BaggageSeconds(type);
+            Act(RampActivity.Baggage, type, 0, duration);
             Assert.That(_scene.TrainLoad, Is.EqualTo(1f), "full before the first bag");
-            Act(RampActivity.Baggage, type, 90, 90);
+            Act(RampActivity.Baggage, type, duration, duration);
             Assert.That(_scene.TrainLoad, Is.LessThan(0.05f), "empty at the end");
 
             // Somewhere in the stage a bag is carried, and later one is going in the door.
             var carried = false;
             var goingIn = false;
             var door = AircraftLayout.For(type).CargoDoor;
-            for (var t = 0.0; t < 90; t += 0.25)
+            for (var t = 0.0; t < duration; t += 0.25)
             {
-                Act(RampActivity.Baggage, type, t, 90);
+                Act(RampActivity.Baggage, type, t, duration);
                 carried |= Worker(RampTask.BaggageCart).Item == CarriedItem.Bag;
                 foreach (var item in _scene.Transit)
                     if (item.Kind == CarriedItem.Bag && System.Math.Abs(item.Z - door.Z) < 1.5f

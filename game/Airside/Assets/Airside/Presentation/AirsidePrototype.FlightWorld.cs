@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Airside.Domain;
 using Airside.Simulation;
 using UnityEngine;
@@ -180,23 +181,23 @@ namespace Airside.Presentation
                 YpadFrame.ToWorld(lat,lon,out x,out z);
                 var hasDepartureRunway=RegionalRunways.TryGet(destination.Code,out var departureRunway);
                 var climbLag=hasDepartureRunway ? RegionalFlightPath.ClimbLagSeconds(aircraft.Type) : 0.0;
-                if (hasDepartureRunway && elapsed<240)
+                if (hasDepartureRunway && elapsed<RegionalDepartureHandover.MaximumEndSeconds)
                 {
-                    var exit=AirsideFlightPath.GroundY+ArrivalMapTrack.HeightMetres(profile.LegMetres/1000,profile.LegSeconds,
-                        profile.LegSeconds-RegionalFlightPath.DepartureSeconds,aircraft.Type,climbLag);
                     if(elapsed<=RegionalFlightPath.DepartureSeconds)
                     {
+                        var exit=AirsideFlightPath.GroundY+ArrivalMapTrack.HeightMetres(profile.LegMetres/1000,profile.LegSeconds,
+                            profile.LegSeconds-RegionalFlightPath.DepartureSeconds,aircraft.Type,climbLag);
                         RegionalFlightPath.Departure(departureRunway,elapsed,exit,aircraft.Type,out x,out y,out z);
                         return;
                     }
-                    RegionalFlightPath.Departure(departureRunway,RegionalFlightPath.DepartureSeconds,exit,aircraft.Type,out var sx,out _,out var sz);
-                    var atExit=ArrivalMapTrack.DistanceOutMetres(profile.LegMetres/1000,profile.LegSeconds,
-                        profile.LegSeconds-RegionalFlightPath.DepartureSeconds,aircraft.Type);
-                    ArrivalMapTrack.LatLon(destination,_operations.Home,aircraft.Registration,profile.LegMetres,atExit,
-                        runway,aircraft.Type,ArrivalApproach.LateralFactor(aircraft,runway),out var exitLat,out var exitLon);
-                    YpadFrame.ToWorld(exitLat,exitLon,out var tx,out var tz);
-                    var blend=Math.Clamp((elapsed-120)/120,0,1);var keepDeparture=1-blend*blend*(3-2*blend);
-                    x+=(sx-tx)*keepDeparture;z+=(sz-tz)*keepDeparture;
+                    // The route starts as if already at climb speed, so it is ahead of the departure's ground roll.
+                    // Carry that gap off over as long as the speed envelope allows, never faster (finding 13).
+                    var handover=DepartureHandover(aircraft,profile,destination,departureRunway,runway,climbLag);
+                    if(handover.Plan.Active(elapsed))
+                    {
+                        var keepDeparture=handover.Plan.Keep(elapsed);
+                        x+=handover.OffsetX*keepDeparture;z+=handover.OffsetZ*keepDeparture;
+                    }
                 }
                 y=AirsideFlightPath.GroundY+ArrivalMapTrack.HeightMetres(profile.LegMetres/1000,profile.LegSeconds,
                     profile.LegSeconds-elapsed,aircraft.Type,climbLag);
@@ -265,6 +266,41 @@ namespace Airside.Presentation
             RegionalTurnaround.RunwayYaws(runway,out var landingYaw,out var departureYaw);
             pose = RegionalTurnaround.At(stopX,stopZ,landingYaw,startX,startZ,departureYaw,spot,_preciseTime+ahead-started,duration);
             return true;
+        }
+
+        private sealed class DepartureHandoverState
+        {
+            public long Started;
+            public double LegSeconds, OffsetX, OffsetZ;
+            public RegionalDepartureHandover.Plan Plan;
+        }
+        private readonly Dictionary<string,DepartureHandoverState> _departureHandovers = new();
+
+        /// <summary>
+        /// The offset between where the departure model leaves the aircraft at the end of its departure and where the
+        /// route says it is, with the ease that carries it away. A pure function of the leg, cached per leg.
+        /// </summary>
+        private DepartureHandoverState DepartureHandover(FleetAircraft aircraft, EnrouteProfile profile, Destination destination,
+            RegionalRunway departureRunway, RunwayDirection runway, double climbLag)
+        {
+            var started=aircraft.StateStartedAt.ElapsedSeconds;
+            if(_departureHandovers.TryGetValue(aircraft.Registration,out var cached) && cached.Started==started
+                && cached.LegSeconds==profile.LegSeconds) return cached;
+            var exit=AirsideFlightPath.GroundY+ArrivalMapTrack.HeightMetres(profile.LegMetres/1000,profile.LegSeconds,
+                profile.LegSeconds-RegionalFlightPath.DepartureSeconds,aircraft.Type,climbLag);
+            RegionalFlightPath.Departure(departureRunway,RegionalFlightPath.DepartureSeconds,exit,aircraft.Type,out var sx,out _,out var sz);
+            var atExit=ArrivalMapTrack.DistanceOutMetres(profile.LegMetres/1000,profile.LegSeconds,
+                profile.LegSeconds-RegionalFlightPath.DepartureSeconds,aircraft.Type);
+            ArrivalMapTrack.LatLon(destination,_operations.Home,aircraft.Registration,profile.LegMetres,atExit,
+                runway,aircraft.Type,ArrivalApproach.LateralFactor(aircraft,runway),out var exitLat,out var exitLon);
+            YpadFrame.ToWorld(exitLat,exitLon,out var tx,out var tz);
+            var state=new DepartureHandoverState{Started=started,LegSeconds=profile.LegSeconds,OffsetX=sx-tx,OffsetZ=sz-tz};
+            var route=ArrivalMapTrack.RouteProfile(profile.LegMetres/1000,profile.LegSeconds,aircraft.Type);
+            state.Plan=RegionalDepartureHandover.PlanFor(aircraft.Type,route,climbLag,Math.Sqrt(state.OffsetX*state.OffsetX+state.OffsetZ*state.OffsetZ));
+            _departureHandovers[aircraft.Registration]=state;
+            Debug.Log($"[Airside handover] {aircraft.Registration} from {destination.Code}: departure is {Math.Sqrt(state.OffsetX*state.OffsetX+state.OffsetZ*state.OffsetZ):0} m off the route; "
+                +$"eased away by {state.Plan.EndSeconds:0} s after lift-off (route climb {route.GroundSpeedKnotsAt(180):0} kt ground speed at 180 s)");
+            return state;
         }
 
         private Vector3 DepartureWorldPosition(CommercialFlight flight, FleetAircraft aircraft, float progress) =>

@@ -104,12 +104,16 @@ namespace Airside.Presentation
             if (aircraft == null) return;
             CaptureFlightJourneyPhase(aircraft);
             if (_reviewJourneyLastState == aircraft.State && Time.unscaledTime < _reviewJourneyNextTrace) return;
-            _reviewJourneyNextTrace = Time.unscaledTime + 5;
+            // The return climb is traced densely: its speeds (HUD ground speed and calibrated airspeed) are what the
+            // departure hand-over must keep inside the speed envelope.
+            var climbing = aircraft.State == FleetState.Inbound && TryEnroute(aircraft, out _, out var legElapsed) && legElapsed < 900;
+            _reviewJourneyNextTrace = Time.unscaledTime + (climbing ? 0.4f : 5f);
             _reviewJourneyLastState = aircraft.State;
             var position = _cockpitView != null ? _cockpitView.position + FlightOrigin : Vector3.zero;
             Debug.Log($"[Airside journey] real {Time.unscaledTime-_reviewJourneyStart:0.0}s sim {_preciseTime:0.0} "
                 + $"{aircraft.Registration} {aircraft.State} trips {aircraft.CompletedTrips} cockpit {InCockpit} "
                 + $"world {position.x:0.0},{position.y:0.0},{position.z:0.0} "
+                + $"gs {_cockpitGroundKnots:0} cas {FlightAtmosphere.CalibratedKnots(_cockpitGroundKnots, _cockpitGearHeight + FlightAtmosphere.FieldElevationMetres):0} "
                 + $"attitude {(_cockpitView != null ? _cockpitView.eulerAngles : Vector3.zero)} "
                 + $"origin {_flightOriginX:0},{_flightOriginZ:0} tiles {_flightTerrain?.ResidentTiles ?? 0} "
                 + $"airport {AirportPresentationVisible} elevation {_flightTerrain?.HasElevation ?? false}");

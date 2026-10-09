@@ -22,7 +22,7 @@ Outbound/AtDestination/Inbound (#721); #9 outstation landing toast keeps the out
 CONFIRM (#734); #11 the Adelaide radar is hidden while watching Parafield (#740); #10 Flight Manual HUD placements and destination colours corrected (#745);
 #5 a celebration card is modal: HUD, hotkeys and world clicks behind it are inert, Enter/Esc/button close it (#738). The native runner cannot click or enter
 the Parafield watch, so 5/6/11 need a hand check (GUI.enabled tint behind the card, CONFIRM fit, no radar at Parafield).
-Flight findings (Claude): #12 Bell legs drawn at true geographical scale and held over far sites (#727, native 40× run passed); #8 turnaround moves to the mapped apron and back (#742, native 40× round trip passed); #13 in progress. Records: `docs/testing/bug-hunt-2026-10-09/FIXES.md`.
+Flight findings (Claude): #12 Bell legs drawn at true geographical scale and held over far sites (#727, native 40× run passed); #8 turnaround moves to the mapped apron and back (#742, native 40× round trip passed); #13 return-climb hand-over now stays inside the speed cap (#743; the arrival bend at Adelaide still reaches CAS 366, unfixed). Records: `docs/testing/bug-hunt-2026-10-09/FIXES.md`.
 
 **Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
 F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;

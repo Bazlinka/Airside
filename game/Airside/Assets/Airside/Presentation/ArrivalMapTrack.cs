@@ -49,6 +49,22 @@ namespace Airside.Presentation
             return show + bodyMetres * (1.0 - body.DistanceFractionAt(flown));
         }
 
+        /// <summary>
+        /// The en-route profile <see cref="DistanceOutMetres"/> follows, on the leg's own clock: the plain leg profile for a
+        /// short leg, otherwise the descent body that ends at the glideslope entry.
+        /// </summary>
+        public static EnrouteProfile RouteProfile(double legKm, double legSeconds, AircraftType type)
+        {
+            var legMetres = Math.Max(0.0, legKm * 1000.0);
+            var speed = CircuitProfile.Knots(AircraftPerformance.For(type).ApproachKnots);
+            var show = (double)ArrivalApproach.ShowMetres;
+            var finalSeconds = speed > 0f ? show / speed : 0.0;
+            if (legMetres <= show * 1.5 || legSeconds <= finalSeconds * 1.25)
+                return EnrouteProfile.For(legKm, legSeconds, type);
+            return EnrouteProfile.For((legMetres - show) / 1000.0, legSeconds - finalSeconds, type,
+                FinalEntryHeightMetres(type) * EnrouteProfile.FeetPerMetre);
+        }
+
         /// <summary>Seconds flown on the drawn final at approach speed; 0 when the leg is too short for a separate final.</summary>
         public static double FinalSeconds(double legMetres, double legSeconds, AircraftType type)
         {

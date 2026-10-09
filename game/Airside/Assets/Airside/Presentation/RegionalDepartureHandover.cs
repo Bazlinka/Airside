@@ -24,10 +24,10 @@ namespace Airside.Presentation
         public const double MaximumEndSeconds = 3000.0;
 
         /// <summary>Stay a little under the cap so sampling between profile points never touches it.</summary>
-        public const double CapMargin = 0.97;
+        public const double CapMargin = 0.96;
 
         /// <summary>Share of the headroom under the cap the ease may use.</summary>
-        public const double HeadroomShare = 0.7;
+        public const double HeadroomShare = 0.6;
 
         private const double Step = 5.0;
         private const double TaperSeconds = 30.0;

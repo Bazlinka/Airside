@@ -3400,9 +3400,7 @@ namespace Airside.Presentation
                 if (!SoakMode) AirsideMacNotifications.Publish(DesktopNotificationPolicy.Arrival(e));
 
                 var flight = FlightNumber.For(e.Aircraft.Airline, e.Aircraft.Registration, e.DestinationCode,
-                    e.State is FleetState.AtDestination or FleetState.Inbound or FleetState.HoldingForLanding
-                        or FleetState.Landing or FleetState.GoAround or FleetState.AwaitingStand
-                        or FleetState.TaxiIn or FleetState.AtStand) ?? e.Aircraft.Registration;
+                    FlightNotices.IsReturnLegEvent(e.State)) ?? e.Aircraft.Registration;
                 switch (e.State)
                 {
                     case FleetState.Outbound:

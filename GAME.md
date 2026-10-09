@@ -13,12 +13,11 @@ Mac build/four-step parked A350 player check pass, no runtime errors. Evidence/l
 **Report-only bug hunt (9 Oct, Codex, #717):** 15 findings/evidence: `docs/testing/bug-hunt-2026-10-09/README.md`.
 Tested aec64616 at 40×, no fixes; capture inversion subsequently fixed. Reproduce remaining findings on current main; UX/normal-speed limits are explicit.
 Fix pass (Claude, issues #722/#723/#724/#725/#726 = findings 1/14/7/2/15): #1 interior audio sources now exist before their low-pass filters (fixed, #728); #7 (#730) doorway shells at the generators' exact 4 mm minimum thickness are accepted again (float32 rounding rejected them); #14 (#731) quit from exterior no longer throws in `EndCockpit` (destroyed camera controller skipped at teardown); #15 (#726) not a defect: the ATR 42 horizontal stabiliser is rendered in Exterior (record `docs/testing/bug-hunt-2026-10-09/fix-pass/`); #2 (#725) not reproduced on clean main (original was a dirty-stamped build; evidence `docs/testing/bug-hunt-2026-10-09/fix-pass/`). Integration run on main e9d9db19 (ATR 42 and Saab windows/exterior/quit): 0 runtime errors, no audio, doorway or EndCockpit errors; open-door hollow and Kingscote window context unverified.
-Fix status (Claude, one PR each; Unity unverified, quick headless checks only): #3 guide Away wording follows
-Outbound/AtDestination/Inbound (#720). #9 outstation landing toast keeps the outbound flight number (#729).
-Outbound/AtDestination/Inbound (#720). #6 an armed contract card's button reads CONFIRM instead of ACCEPT (#733).
-Outbound/AtDestination/Inbound (#720). #11 the Adelaide radar is hidden while watching Parafield (#739).
-Outbound/AtDestination/Inbound (#720). #10 Flight Manual HUD placements and destination colours corrected (#744).
-Outbound/AtDestination/Inbound (#720). #5 a celebration card is modal: HUD, hotkeys and world clicks behind it are inert; Enter/Esc/button close it (#735).
+Fix status, second pass (Claude, one PR each; Unity unverified, quick headless/syntax checks only): #3 first-flight guide Away wording follows
+Outbound/AtDestination/Inbound (#721); #9 outstation landing toast keeps the outbound flight number (#732); #6 an armed contract card's button reads
+CONFIRM (#734); #11 the Adelaide radar is hidden while watching Parafield (#740); #10 Flight Manual HUD placements and destination colours corrected (#745);
+#5 a celebration card is modal: HUD, hotkeys and world clicks behind it are inert, Enter/Esc/button close it (#738). The native runner cannot click or enter
+the Parafield watch, so 5/6/11 need a hand check (GUI.enabled tint behind the card, CONFIRM fit, no radar at Parafield).
 
 **Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
 F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;

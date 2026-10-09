@@ -25,10 +25,14 @@ Final clean universal Mac build and nine native steps pass, zero runtime errors;
 day/dusk/night and horizon frames inspected. Focused 40× Whyalla arrival/origin
 probe has no runtime errors; regional close windows/GPU cost remain unverified; `docs/testing/city-town-lights-2026-10-09.md`.
 
-**Directional twilight sky (9 Oct, Codex, #758):** cool zenith/horizon gradients,
+**Directional twilight sky (9 Oct, Codex, #758 / #773):** cool zenith/horizon gradients,
 sun-facing amber/rose dawn and dusk, blue-hour evenings; broad orange fog reduced.
 Existing celestial clock, weather/altitude, stars, night readability and saves retained.
-Native clear dawn/day/sunset/evening/night and overcast/fog review pending on pushed revision.
+Refinement narrows amber, softens dawn, adds an opposing rose band and cools blue hour.
+Clean universal bb4a17ea build and 31 native steps pass, zero runtime errors; before/after
+cycle, follow, opposite horizon and tower-weather frames inspected. Seasonal extremes/GPU
+performance unverified; combined subsequent gear main not rebuilt.
+Evidence: `docs/testing/sky-refinement-2026-10-09/README.md`.
 Decision: `2026-10-09-directional-twilight-sky`.
 
 **Tower cab and rain motion (9 Oct, Codex, #756):** original interior ceiling, window
@@ -42,7 +46,8 @@ pass. Synthetic 220 m/s rain probe reaches 216.7 m/s (previously 90); real fligh
 crossing and control hit-testing unverified.
 Decision/evidence: `docs/testing/tower-rain-2026-10-09/README.md`.
 
-**Next:** Bailey can use the validated local build for personal tower/rain playtesting.
+**Next:** Bailey can use the stamped sky checkout build for personal sky/tower playtesting;
+its bb4a17ea identity predates the subsequent gear merge.
 Other active state and prior verification limits are preserved in
 `docs/history/game-handoff-before-tower-rain-2026-10-09.md`.
 Standing policy: agents choose necessary focused runtime checks; broad suites/soaks on request.

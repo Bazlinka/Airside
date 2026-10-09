@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-09 — #727: helicopter legs are drawn at true geographical scale and held over far destinations, so a Bell 412 booked to Kingscote reaches the real Kingscote (bug hunt #12).
 - 2026-10-09 — Bug-hunt fix pass (#722-#726) closed out: findings 1/14/7 fixed, 2 not reproduced, 15 not a defect; integration run on main had zero runtime errors.
 
 - 2026-10-09 — #725: bug-hunt finding 2 (Saab right window obstructions) not reproduced on clean main at five times of day; evidence and limits recorded, no code/asset change.

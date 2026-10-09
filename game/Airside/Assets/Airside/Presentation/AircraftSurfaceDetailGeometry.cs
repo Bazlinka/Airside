@@ -87,6 +87,66 @@ namespace Airside.Presentation
             Rect(target, skin, triangles, side, y0 + width, y1 - width, z1 - width, z1);
         }
 
+        /// <summary>A narrow hinge seam sampled on the actual tapered aerofoil, not its bounding box.</summary>
+        public static Patch ControlSeam(float[] skin, int[] triangles, bool vertical, float fraction = 0.06f)
+        {
+            var spanAxis = vertical ? 1 : 0;
+            var depthAxis = vertical ? 0 : 1;
+            var min = float.MaxValue; var max = float.MinValue;
+            for (var i = spanAxis; i < skin.Length; i += 3) { min = Math.Min(min, skin[i]); max = Math.Max(max, skin[i]); }
+            var positions = new List<float>(); var faces = new List<int>();
+            if (max - min < 0.25f) return new Patch(positions.ToArray(), faces.ToArray());
+            const int samples = 32;
+            for (var side = 0; side < (vertical ? 2 : 1); side++)
+            {
+                var start = positions.Count / 3;
+                var valid = new bool[samples];
+                for (var sample = 0; sample < samples; sample++)
+                {
+                    var span = min + 0.012f + (max - min - 0.024f) * sample / (samples - 1);
+                    var rear = float.MaxValue; var front = float.MinValue;
+                    for (var t = 0; t < triangles.Length; t += 3)
+                        for (var edge = 0; edge < 3; edge++)
+                        {
+                            var a = triangles[t + edge] * 3; var b = triangles[t + (edge + 1) % 3] * 3;
+                            var sa = skin[a + spanAxis]; var sb = skin[b + spanAxis];
+                            if (Math.Abs(sb - sa) < 0.000001f || span < Math.Min(sa, sb) || span > Math.Max(sa, sb)) continue;
+                            var z = skin[a + 2] + (skin[b + 2] - skin[a + 2]) * (span - sa) / (sb - sa);
+                            front = Math.Max(front, z); rear = Math.Min(rear, z);
+                        }
+                    var centreZ = front - (front - rear) * fraction;
+                    valid[sample] = front > rear;
+                    for (var edge = 0; edge < 2; edge++)
+                    {
+                        var z = centreZ + (edge == 0 ? -0.009f : 0.009f);
+                        var depth = side == 0 ? float.MinValue : float.MaxValue;
+                        for (var t = 0; t < triangles.Length; t += 3)
+                        {
+                            var a = triangles[t] * 3; var b = triangles[t + 1] * 3; var c = triangles[t + 2] * 3;
+                            var ax = skin[a + spanAxis]; var bx = skin[b + spanAxis]; var cx = skin[c + spanAxis];
+                            var az = skin[a + 2]; var bz = skin[b + 2]; var cz = skin[c + 2];
+                            var det = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz);
+                            if (Math.Abs(det) < 0.0000001f) continue;
+                            var u = ((bz - cz) * (span - cx) + (cx - bx) * (z - cz)) / det;
+                            var v = ((cz - az) * (span - cx) + (ax - cx) * (z - cz)) / det;
+                            if (u < -0.00001f || v < -0.00001f || u + v > 1.00001f) continue;
+                            var d = skin[a + depthAxis] * u + skin[b + depthAxis] * v + skin[c + depthAxis] * (1 - u - v);
+                            depth = side == 0 ? Math.Max(depth, d) : Math.Min(depth, d);
+                        }
+                        if (depth == float.MinValue || depth == float.MaxValue) { valid[sample] = false; depth = 0f; }
+                        depth += side == 0 ? 0.004f : -0.004f;
+                        positions.Add(vertical ? depth : span); positions.Add(vertical ? span : depth); positions.Add(z);
+                    }
+                    if (sample == 0 || !valid[sample] || !valid[sample - 1]) continue;
+                    var p = start + (sample - 1) * 2;
+                    var reverse = vertical ? side == 1 : true;
+                    faces.Add(p); faces.Add(p + (reverse ? 3 : 2)); faces.Add(p + (reverse ? 2 : 3));
+                    faces.Add(p); faces.Add(p + (reverse ? 1 : 3)); faces.Add(p + (reverse ? 3 : 1));
+                }
+            }
+            return new Patch(positions.ToArray(), faces.ToArray());
+        }
+
         private static void Rect(List<Patch> target, float[] skin, int[] triangles,
             int side, float y0, float y1, float z0, float z1, float offset = 0.006f) =>
             target.Add(Rectangle(skin, triangles, side, y0, y1, z0, z1, offset));

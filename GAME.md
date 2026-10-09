@@ -7,6 +7,12 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Fleet refinements (9 Oct, Codex, #716):** opened authored intake caps and fitted recessed
+liners; moving control surfaces gain restrained hull-sampled hinge seams, including
+trainer wings/tail. Envelope, pivots, liveries, simulation and saves retained.
+Native fleet baseline inspected; aperture/determinism checks pass. Native after views
+and focused player evidence pending on this branch.
+
 **Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
 F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;
 readable scrolling Options and current-view targeting. Operational weather, live time, economics and saves unchanged.

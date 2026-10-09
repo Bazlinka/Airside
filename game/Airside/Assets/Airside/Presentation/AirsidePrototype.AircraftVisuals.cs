@@ -1672,6 +1672,8 @@ namespace Airside.Presentation
                 return kitName.EndsWith("_head", StringComparison.Ordinal)
                     ? new Color(0.53f, 0.40f, 0.33f)
                     : new Color(0.075f, 0.105f, 0.15f);
+            if (kitName.StartsWith("intake_liner_", StringComparison.Ordinal))
+                return new Color(0.07f, 0.08f, 0.09f);
             if (kitName.StartsWith("fan_", StringComparison.Ordinal))
                 return new Color(0.16f, 0.18f, 0.21f);
             if (kitName.StartsWith("tire_", StringComparison.Ordinal))

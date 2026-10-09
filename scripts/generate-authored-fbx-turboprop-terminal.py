@@ -1492,6 +1492,9 @@ def write_kit(
     basename: str,
     meshes: dict[str, tuple[np.ndarray, np.ndarray]],
 ) -> None:
+    if folder.name == "Aircraft":
+        from aircraft_intakes import refine as refine_intakes
+        refine_intakes(meshes)
     gltf = folder / f"{basename}.gltf"
     fbx = folder / f"{basename}.fbx"
     bin_path = gltf.with_suffix(".bin")

@@ -29,7 +29,15 @@ namespace Airside.Presentation
                     || name.StartsWith("door left ", StringComparison.Ordinal)
                     || name.StartsWith("door right ", StringComparison.Ordinal);
                 var hull = name == "fuselage" || name.EndsWith(" fuselage", StringComparison.Ordinal);
-                if (!door && !hull) continue;
+                var control = name.StartsWith("flap ", StringComparison.Ordinal)
+                    || name.StartsWith("aileron ", StringComparison.Ordinal)
+                    || name.StartsWith("elevator ", StringComparison.Ordinal) || name == "rudder";
+                // The small trainer's fixed tail carries its hinge in the same
+                // mesh; Bell stabilisers remain fixed and receive no false seam.
+                var trainerTail = name.Contains("trainer", StringComparison.Ordinal)
+                    && (name.Contains("tailplane", StringComparison.Ordinal) || name.EndsWith("wing left", StringComparison.Ordinal)
+                        || name.EndsWith("wing right", StringComparison.Ordinal));
+                if (!door && !hull && !control && !trainerTail) continue;
 
                 var matrix = aircraft.worldToLocalMatrix * filter.transform.localToWorldMatrix;
                 var original = filter.sharedMesh.vertices;
@@ -43,6 +51,12 @@ namespace Airside.Presentation
                     skin[i * 3] = v.x; skin[i * 3 + 1] = v.y; skin[i * 3 + 2] = v.z;
                 }
                 var triangles = filter.sharedMesh.triangles;
+                if (control || trainerTail)
+                {
+                    var patch = AircraftSurfaceDetailGeometry.ControlSeam(skin, triangles, name == "rudder", trainerTail ? 0.76f : 0.06f);
+                    Add(filter.transform, aircraft, new List<AircraftSurfaceDetailGeometry.Patch> { patch }, DetailName, Seam);
+                    continue;
+                }
                 var details = AircraftSurfaceDetailGeometry.Build(skin, triangles, door, cargo, sliding,
                     bounds.center.x, bounds.min.y, bounds.max.y, bounds.min.z, bounds.max.z);
                 Add(filter.transform, aircraft, details.Trim, DetailName, Seam);

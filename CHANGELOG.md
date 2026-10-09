@@ -119,6 +119,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Refine fleet engine mouths with recessed liners and fitted control hinges; preserve aircraft geometry envelopes, animation pivots and saves (#716).
+
 - Hold storm departures at their stands; taxi-released aircraft continue and arrivals already on extended final retain their landing timer (#670).
 
 - Fix night final visibility: haze-aware aircraft light halos, fuselage-safe distant glows and readable close night position lights (#668).

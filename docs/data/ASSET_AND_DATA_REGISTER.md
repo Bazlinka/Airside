@@ -563,3 +563,7 @@ project-owned derivative geometry, no external artwork/assets, no attribution or
 cost. Previous git revision is the fallback. Other finished aircraft parts and
 fictional tail paint are preserved. Native baseline reproduced the gear fault;
 fixed native gear poses and packaged parked follow captures inspected; moving-propeller video, night/storm and performance remain unverified. Evidence: `docs/testing/dash8-visual-repair-2026-10-09/README.md`.
+
+### Fleet intake refinement, 9 October 2026 (#716)
+
+Original project-owned geometry by Codex: `scripts/aircraft_intakes.py`, `scripts/refine-aircraft-intakes.py`; no external asset, licence fee, attribution or generated bitmap. Surgical existing-kit pass retains moving meshes and GUIDs, opens blocking engine caps and fits recessed liners. Shared aircraft writer reapplies the finish on regeneration; adapted kits can use the explicit refinement command. Editable FBXs, glTF/bin, mirrors and thumbnails remain in existing paths. Runtime hinge seams derive from actual control triangles and follow their existing rigs; primitive fallback retained. Native evidence is recorded under `docs/testing/fleet-refinements-2026-10-09/`.

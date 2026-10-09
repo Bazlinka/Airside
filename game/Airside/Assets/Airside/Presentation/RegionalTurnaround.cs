@@ -160,24 +160,61 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Chooses where on an apron to park: its centre, the nose toward the nearest terminal point when there
-        /// is one (nose-in), otherwise parallel to the runway the aircraft landed on.
+        /// Chooses where on an apron to park: its centre, along the apron's own long axis in side-by-side slots, the
+        /// nose square to that axis and toward the nearest terminal point when there is one (nose-in), otherwise
+        /// toward the side the runway the aircraft landed on faces (<paramref name="fallbackYaw"/>).
         /// </summary>
         public static TurnaroundSpot Spot(double[] apronX, double[] apronZ, double[] terminalX, double[] terminalZ,
             double fallbackYaw)
         {
             if (apronX == null || apronZ == null || apronX.Length == 0 || apronX.Length != apronZ.Length)
                 throw new ArgumentException("An apron needs at least one point.");
-            double cx = 0, cz = 0;
-            for (var i = 0; i < apronX.Length; i++)
+            var n = apronX.Length;
+            // Area centroid of the footprint (a vertex average leans toward wherever the mapper placed most points).
+            double area = 0, cx = 0, cz = 0;
+            for (var i = 0; i < n; i++)
             {
-                cx += apronX[i];
-                cz += apronZ[i];
+                var j = (i + 1) % n;
+                var cross = apronX[i] * apronZ[j] - apronX[j] * apronZ[i];
+                area += cross;
+                cx += (apronX[i] + apronX[j]) * cross;
+                cz += (apronZ[i] + apronZ[j]) * cross;
             }
 
-            cx /= apronX.Length;
-            cz /= apronX.Length;
-            var yaw = fallbackYaw;
+            if (Math.Abs(area) > 1e-6)
+            {
+                cx /= 3.0 * area;
+                cz /= 3.0 * area;
+            }
+            else
+            {
+                cx = cz = 0;
+                for (var i = 0; i < n; i++)
+                {
+                    cx += apronX[i];
+                    cz += apronZ[i];
+                }
+
+                cx /= n;
+                cz /= n;
+            }
+
+            // The apron's long axis: the principal direction of its outline.
+            double sxx = 0, szz = 0, sxz = 0;
+            for (var i = 0; i < n; i++)
+            {
+                var dx = apronX[i] - cx;
+                var dz = apronZ[i] - cz;
+                sxx += dx * dx;
+                szz += dz * dz;
+                sxz += dx * dz;
+            }
+
+            var axis = 0.5 * Math.Atan2(2.0 * sxz, sxx - szz);
+            var tx = Math.Cos(axis);
+            var tz = Math.Sin(axis);
+            // Square to the axis: which way is the terminal (or, failing that, the way the runway faces)?
+            double wantX = Math.Sin(fallbackYaw * Math.PI / 180.0), wantZ = Math.Cos(fallbackYaw * Math.PI / 180.0);
             if (terminalX != null && terminalZ != null && terminalX.Length > 0 && terminalX.Length == terminalZ.Length)
             {
                 var best = double.MaxValue;
@@ -189,17 +226,23 @@ namespace Airside.Presentation
                     if (d < best && d > 1.0)
                     {
                         best = d;
-                        yaw = YawOf(dx, dz);
+                        wantX = dx;
+                        wantZ = dz;
                     }
                 }
             }
 
-            // Side-by-side positions along the apron, perpendicular to the nose, kept inside its extent.
-            var yawRadians = yaw * Math.PI / 180.0;
-            var tx = Math.Cos(yawRadians);
-            var tz = -Math.Sin(yawRadians);
+            var noseX = -tz;
+            var noseZ = tx;
+            if (noseX * wantX + noseZ * wantZ < 0)
+            {
+                noseX = -noseX;
+                noseZ = -noseZ;
+            }
+
+            var yaw = YawOf(noseX, noseZ);
             double low = double.MaxValue, high = double.MinValue;
-            for (var i = 0; i < apronX.Length; i++)
+            for (var i = 0; i < n; i++)
             {
                 var along = (apronX[i] - cx) * tx + (apronZ[i] - cz) * tz;
                 low = Math.Min(low, along);

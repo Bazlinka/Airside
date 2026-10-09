@@ -138,7 +138,7 @@ namespace Airside.Tests
 
             Assert.That(used.Count, Is.EqualTo(2), "twenty aircraft are spread over both places");
             var without = RegionalTurnaround.Spot(new[] { 0.0, 10, 10 }, new[] { 0.0, 0, 10 }, null, null, 77);
-            Assert.That(without.YawDegrees, Is.EqualTo(77.0).Within(1e-9), "no terminal: parallel to the runway");
+            Assert.That(YawGap(without.YawDegrees, 77.0), Is.LessThan(90.0), "no terminal: square to the apron, on the runway side");
         }
     }
 }

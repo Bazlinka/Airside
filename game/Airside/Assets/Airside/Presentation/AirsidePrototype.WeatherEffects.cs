@@ -13,11 +13,12 @@ namespace Airside.Presentation
         private Renderer _weatherRainRenderer;
         private Transform _rainObserver;
         private Vector3 _rainObserverLast;
+        private double _rainObserverOriginX, _rainObserverOriginZ;
         private Vector3 _rainObserverVelocity;
         private Vector3 _rainFlowMetres;
 
-        /// <summary>Fastest the observer's own motion may lean the rain, m/s; time acceleration would otherwise smear it.</summary>
-        private const float RainObserverSpeedCap = 90f;
+        /// <summary>Safety envelope above normal fleet cruise speed; camera cuts are rejected separately.</summary>
+        private const float RainObserverSpeedCap = 350f;
 
         /// <summary>
         /// Velocity of whoever the player is riding with (the cockpit view or the followed aircraft), smoothed. The
@@ -45,7 +46,11 @@ namespace Airside.Presentation
             var position = observer.position;
             if (observer == _rainObserver)
             {
-                var raw = (position - _rainObserverLast) / dt;
+                // Compare in absolute world space so a floating-origin recenter is not a camera cut.
+                var delta = position - _rainObserverLast;
+                delta.x = (float)((position.x - _rainObserverLast.x) + _flightOriginX - _rainObserverOriginX);
+                delta.z = (float)((position.z - _rainObserverLast.z) + _flightOriginZ - _rainObserverOriginZ);
+                var raw = delta / dt;
                 // A flight-origin shift or camera cut is a jump, not motion: keep the last velocity through it.
                 if (raw.magnitude < 400f)
                     _rainObserverVelocity = Vector3.Lerp(_rainObserverVelocity,
@@ -55,6 +60,8 @@ namespace Airside.Presentation
                 _rainObserverVelocity = Vector3.zero;
             _rainObserver = observer;
             _rainObserverLast = position;
+            _rainObserverOriginX = _flightOriginX;
+            _rainObserverOriginZ = _flightOriginZ;
             return _rainObserverVelocity;
         }
 
@@ -125,12 +132,13 @@ namespace Airside.Presentation
             // Drops fall through the world; the observer moves through the drops. What the eye sees is the difference,
             // so climbing makes rain stream down faster and flying forward slants it back toward the lens.
             var fall = Vector3.down * Mathf.Lerp(16f, 28f, precipitation) + drift - RainObserverVelocity();
-            _rainFlowMetres += fall * Mathf.Min(Time.unscaledDeltaTime, 0.1f);
-            var halfLength = Mathf.Clamp(radius * 0.015f, 0.18f, 4.8f);
+            // Do not discard elapsed time at low FPS: it made rain visibly slow down while the aircraft kept moving.
+            _rainFlowMetres += fall * Time.unscaledDeltaTime;
+            // Approximately a 1/35-second exposure, independent of zoom; a fast jet sees long streaming drops.
+            var halfLength = Mathf.Clamp(fall.magnitude * 0.014f, 0.18f, radius * 0.35f);
             var width = Mathf.Clamp(radius * 0.0008f, 0.012f, 0.32f);
             var right = _mainCamera.transform.right * width;
-            // Faster relative motion reads as longer streaks, up to about three times the still-air length.
-            var along = fall.normalized * (halfLength * Mathf.Clamp(fall.magnitude / 22f, 1f, 3f));
+            var along = fall.normalized * halfLength;
             var count = Mathf.CeilToInt(WeatherRainDrops * Mathf.Lerp(0.25f, 1f, precipitation));
             for (var i = 0; i < WeatherRainDrops; i++)
             {

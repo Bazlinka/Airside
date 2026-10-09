@@ -567,3 +567,13 @@ fixed native gear poses and packaged parked follow captures inspected; moving-pr
 ### Fleet intake refinement, 9 October 2026 (#716)
 
 Original project-owned geometry by Codex: `scripts/aircraft_intakes.py`, `scripts/refine-aircraft-intakes.py`; no external asset, licence fee, attribution or generated bitmap. Surgical existing-kit pass retains moving meshes and GUIDs, opens blocking engine caps and fits recessed liners. Shared aircraft writer reapplies the finish on regeneration; adapted kits can use the explicit refinement command. Editable FBXs, glTF/bin, mirrors and thumbnails remain in existing paths. Runtime hinge seams derive from actual control triangles and follow their existing rigs; primitive fallback retained. Native evidence is recorded under `docs/testing/fleet-refinements-2026-10-09/`.
+
+
+## Tower cab interior — 9 October 2026 (#756)
+
+Original project-owned procedural geometry in `Presentation/AirsidePrototype.Tower.cs`:
+interior floor/ceiling, framing, consoles and abstract display lines derived from the
+registered OSM tower footprint. No external assets, images, fonts, fees or attribution.
+No claim that the furniture is surveyed Adelaide tower equipment. Existing exterior
+and standing eye retained; interior appears only during tower view. Previous git source
+is fallback. Native evidence/limits: `docs/testing/tower-rain-2026-10-09/README.md`.

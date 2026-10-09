@@ -1,0 +1,124 @@
+{
+  "protocol": 1,
+  "steps": [
+    {
+      "id": "day",
+      "action": "time",
+      "value": "13:30",
+      "capture": true,
+      "settleSeconds": 1
+    },
+    {
+      "id": "clear",
+      "action": "weather",
+      "value": "Clear",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "tower",
+      "action": "tower",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 1
+    },
+    {
+      "id": "tower-up",
+      "action": "tower-look",
+      "value": "-25,0",
+      "capture": true,
+      "settleSeconds": 1
+    },
+    {
+      "id": "tower-down",
+      "action": "tower-look",
+      "value": "25,0",
+      "capture": true,
+      "settleSeconds": 1
+    },
+    {
+      "id": "tower-side",
+      "action": "tower-look",
+      "value": "0,90",
+      "capture": true,
+      "settleSeconds": 1
+    },
+    {
+      "id": "tower-rear",
+      "action": "tower-look",
+      "value": "0,180",
+      "capture": true,
+      "settleSeconds": 1
+    },
+    {
+      "id": "overview",
+      "action": "overview",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 1
+    },
+    {
+      "id": "follow",
+      "action": "follow",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 1
+    },
+    {
+      "id": "rain",
+      "action": "weather",
+      "value": "Rain",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "rain-still",
+      "action": "rain-motion",
+      "value": "0",
+      "capture": true,
+      "settleSeconds": 3
+    },
+    {
+      "id": "rain-fast",
+      "action": "rain-motion",
+      "value": "220",
+      "capture": true,
+      "settleSeconds": 3
+    },
+    {
+      "id": "rain-reset",
+      "action": "rain-motion",
+      "value": "0",
+      "capture": true,
+      "settleSeconds": 3
+    },
+    {
+      "id": "night",
+      "action": "time",
+      "value": "21:30",
+      "capture": true,
+      "settleSeconds": 1
+    },
+    {
+      "id": "tower-night",
+      "action": "tower",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 1
+    },
+    {
+      "id": "tower-night-look",
+      "action": "tower-look",
+      "value": "15,0",
+      "capture": true,
+      "settleSeconds": 1
+    },
+    {
+      "id": "overview-end",
+      "action": "overview",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 1
+    }
+  ]
+}

@@ -333,11 +333,12 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-09 | [Established arrivals retain physical presence when estimates are postponed](2026-10-09-established-arrival-holding-presence.md) | Accepted — Bailey's no-disappearing-aircraft instruction |
 | 2026-10-09 | [Flight tracker and per-view HUD layout](2026-10-09-flight-tracker-and-hud-views.md) | layout, painter, step logic and visibility rules covered by headless t |
 | 2026-10-09 | [Ground character and restrained surface wear](2026-10-09-ground-character.md) | Accepted — Bailey requested a less perfect, more authentic ground/worl |
-| 2026-10-09 | [Issue-driven real-game diagnosis and Mac bridge](2026-10-09-issue-diagnostics-mac-bridge.md) | Implemented; end-to-end verification in progress. |
+| 2026-10-09 | [Issue-driven real-game diagnosis and Mac bridge](2026-10-09-issue-diagnostics-mac-bridge.md) | Implemented; real remote success/failure evidence verified on 9 Octobe |
 | 2026-10-09 | [Linear colour rendering](2026-10-09-linear-colour-rendering.md) | Accepted — Bailey authorised the recommended first renderer improvemen |
 | 2026-10-09 | [Parked aircraft activity window](2026-10-09-parked-aircraft-activity-window.md) | Accepted — Bailey's parked-aircraft proposal and instruction to contin |
 | 2026-10-09 | [Physical ground detail on verges, drains and pavement edges](2026-10-09-physical-ground-detail.md) | Accepted — Bailey authorised the next environment improvements. |
 | 2026-10-09 | [Recorded weather and arrival continuity](2026-10-09-recorded-weather-and-arrival-continuity.md) | Accepted — Bailey's instruction to continue fixing the audited mismatc |
 | 2026-10-09 | [Terminal doors and more people on the ground](2026-10-09-terminal-doors-and-people.md) | pure geometry and walk tests pass; the Unity assembly compiles; appear |
+| 2026-10-09 | [Tower cab and rain motion](2026-10-09-tower-cab-and-rain-motion.md) | Accepted |
 | 2026-10-09 | [Weather delay is not scored against punctuality](2026-10-09-weather-delay-not-scored.md) | Accepted — Bailey's request to improve weather consequences across the |
 | 2026-10-09 | [Welcome weather isolation and small comfort fixes](2026-10-09-welcome-weather-isolation.md) | Accepted |

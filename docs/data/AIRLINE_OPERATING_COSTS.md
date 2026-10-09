@@ -133,6 +133,21 @@ aircraft book values and leases), or (c) keep them as clearly labelled design va
 - Average fares are not in BITRE's publication. The ACCC airline monitoring reports are the likely source; not yet read.
 - Kingscote was not found in the search results; BITRE may not publish it as a route.
 
+## 5b. Fares and values — additional findings (9 Oct 2026)
+
+- ACCC monitoring (December 2025 domestic report, via press coverage): average airfare in October 2025 was up 3.2% on a
+  year earlier and 4.5% above October 2019; 5.5M+ domestic passengers flew that month. The ACCC report itself was not
+  opened; it is the likely source of route-level yield. Tier C.
+- BITRE's airfare series is an **index** of the lowest available fares on the top 70 routes (best discount, restricted economy,
+  business), not dollars paid. BITRE says it does not measure average fares paid. It cannot supply a Kingscote fare. Tier A as a
+  statement of what the data is.
+- Adelaide–Kingscote consumer snapshots: about A$132 one way from aggregators, A$169 and up on Rex's own site. Cached search
+  results, tier D; Rex has run a Community Fare on this route (reported at $99 until 2023, not confirmed since).
+- ATR 72 list prices from order announcements: about US$21–24M each. List prices, not what airlines pay. Tier C.
+- No free per-aircraft price found for Dash 8-400, A220, 737-800 or the Australasian operators' fleets. Airline annual reports
+  give aggregate commitments, not unit prices. Conclusion: aircraft values and leases stay **tier D design constants**,
+  scaled from list prices and the IBA figures above, and labelled as such.
+
 ## 6. What is still needed before code
 
 1. Read the Airservices PDF directly for Schedule 5 weights, the ARFF category headers, GST basis and en route units.

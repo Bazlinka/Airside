@@ -1,0 +1,53 @@
+# Economy v2: real-dollar scale, real fees, tuned levers
+
+Date: 2026-10-09
+Status: approved by Bailey 9 Oct 2026 (direction); numbers below are proposals until the cost model's payback tests pass.
+
+## Decision
+
+1. **Scale.** All money in the game moves to real Australian dollars (economy plan option A). Aircraft prices, flight costs,
+   fares, fees, funds and loans share one scale. The per-flight formulas in `FlightEconomics` are replaced by a pure
+   `FlightCostModel` (no Unity types) built from block time, fuel, crew, maintenance reserve, airport and navigation
+   charges, handling and en-route charges, plus per-aircraft standing costs. Revenue becomes seats x load factor x fare.
+2. **Real where it changes a choice; tuned where it only sets pace.** Real inputs: Adelaide Airport per-passenger fees,
+   Airservices weight-based charges, fuel burn and fuel price, fares and load factors. Tuned constants (named, in one
+   place, documented): opening cash and loan, route subsidies on thin regional routes, aircraft values and leases where no
+   free source exists, and the rate at which demand grows. Sources and confidence tiers: `docs/data/AIRLINE_OPERATING_COSTS.md`.
+3. **Fuel.** A seeded, deterministic daily price walk with a baseline and a range. Hard difficulty widens the range; other
+   difficulties stay cost multipliers. Baseline: a 2025-like price (about US$90-100 per barrel), not the 2026 spike.
+4. **Loans and recovery.** One rolling bank loan with interest and a tier-based cap. Negative cash triggers the existing
+   recovery contract and loan offer; there is no game over and no hard lock.
+5. **Competitors** reuse this cost and revenue code (roadmap phase 2) and are not part of this change.
+
+## Reason
+
+Today's flat per-flight formulas make cash a timer, not a decision (ADR `2026-10-08-flight-cost-rebalance`). Real fee
+structures create real trade-offs: Adelaide charges regional arrivals per passenger ($6.13) but Airservices charges by
+weight ($12.78 per tonne), so a full small aircraft and a half-empty large one cost very differently.
+
+## Affected systems
+
+`FlightEconomics`, `AircraftAcquisition` prices, `PlayerBase` and refit costs, `Maintenance`, `AirportEconomy` daily
+costs, `ContractMarket` pay, planner forecasts and refunds, `AwayCatchUp`, `Difficulty`, `CareerBot`, HUD and planner
+display (profit per route, fuel price, monthly P&L), and most money-asserting tests.
+
+## Migration impact
+
+- Save `CurrentVersion` 23 -> 24. New fields: loan balance, fuel-price state, standing-cost accrual date.
+- **Existing funds scale by 1,000** on load (a one-time migration keyed on version < 24), so relative wealth is preserved:
+  the old Saab price of 1,600 becomes $1.6M, in line with the new scale. Owned aircraft and contracts are unchanged.
+  Contract pay and refunds already in flight are converted with the same factor. Players see a one-time rebalance notice.
+- The migration must be idempotent (never apply twice) and covered by a v23 fixture test.
+- Dispatch cost and fares are computed, not persisted, so they need no migration.
+
+## Acceptance
+
+- Payback targets per type are written down and tested: Saab, ATR, 737-800 and one widebody.
+- `CareerBot` confirms the 100-150 hour career (ADR 0120) still holds, and no run soft-locks.
+- Simulation outcomes do not depend on frame rate; catch-up reproduces the same fuel-price walk and costs.
+- Every sourced number in code cites its row in `AIRLINE_OPERATING_COSTS.md`; tier D values are labelled design constants.
+
+## Open before code
+
+Aircraft values and leases, fares, and crew on-costs remain tier C/D in the data file. The cost model can be written with
+named placeholders, but none ships in a build until its source or design-constant label is recorded.

@@ -330,6 +330,8 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-09 | [Stable cloud coverage and visual weather variety](2026-10-09-cloud-continuity-and-variety.md) | Accepted — Bailey's cloud continuity and weather variety instruction |
 | 2026-10-09 | [Cloud lighting and depth](2026-10-09-cloud-lighting-and-depth.md) | Accepted — Bailey authorised continued renderer implementation and mer |
 | 2026-10-09 | [Connected, type-specific aircraft tails](2026-10-09-connected-aircraft-tails.md) | Accepted under Bailey's fleet-tail correction request |
+| 2026-10-09 | [Directional twilight sky](2026-10-09-directional-twilight-sky.md) |  |
+| 2026-10-09 | [Economy v2: real-dollar scale, real fees, tuned levers](2026-10-09-economy-v2-real-dollar-scale.md) | approved by Bailey 9 Oct 2026 (direction); numbers below are proposals |
 | 2026-10-09 | [Established arrivals retain physical presence when estimates are postponed](2026-10-09-established-arrival-holding-presence.md) | Accepted — Bailey's no-disappearing-aircraft instruction |
 | 2026-10-09 | [Flight tracker and per-view HUD layout](2026-10-09-flight-tracker-and-hud-views.md) | layout, painter, step logic and visibility rules covered by headless t |
 | 2026-10-09 | [Ground character and restrained surface wear](2026-10-09-ground-character.md) | Accepted — Bailey requested a less perfect, more authentic ground/worl |

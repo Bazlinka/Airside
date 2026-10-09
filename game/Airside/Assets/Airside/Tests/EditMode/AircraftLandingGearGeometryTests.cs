@@ -86,6 +86,11 @@ namespace Airside.Tests
                 foreach (var truck in transforms)
                     if (truck.name.StartsWith("Truck ", StringComparison.Ordinal))
                         Assert.That(truck.Find("Bogie beam " + truck.name), Is.Not.Null, "the wheels must carry their axles");
+                if (id == "ATR42")
+                    foreach (var part in transforms)
+                        if (part.name is "Gear L" or "Gear R" or "Gear fairing L" or "Gear fairing R")
+                            Assert.That(part.parent.name.StartsWith("Wing ", StringComparison.Ordinal), Is.False,
+                                "fuselage sponsons must not follow high-wing flex");
                 if (id is "A359" or "A339" or "B789" or "B78X")
                 {
                     Assert.That(Array.Exists(transforms, t => t.name == "gear_door_nose_l"), Is.True);

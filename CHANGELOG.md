@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-09 — Weather delay (storm ground stop, weather-held helicopters) no longer costs reliability or breaks the on-time streak; the delay breakdown still shows it (headless-tested).
 - 2026-10-09 — Forecast wind now follows the weather (fog near-calm, rain breezy, storm strong and gusty, clear a little lighter) and eases between hours; live-observed wind unchanged (headless-tested; unverified in Unity).
 - 2026-10-09 — Clouds gain sunlit thin edges, deeper storm self-shadowing, eased silhouettes and density-based fades (Unity unverified).
 

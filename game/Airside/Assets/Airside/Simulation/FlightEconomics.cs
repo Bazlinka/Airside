@@ -120,6 +120,16 @@ namespace Airside.Simulation
         public const int SoftLateSeconds = 5 * 60;
         public const int HardLateSeconds = 15 * 60;
 
+        /// <summary>Lateness left once the seconds attributed to weather are taken off (ADR: weather is not scored).</summary>
+        public static int ControllableLateness(int latenessSeconds, DelayBreakdown delay)
+        {
+            var weather = 0;
+            foreach (var part in delay.Parts)
+                if (part.Cause == DelayCause.Weather)
+                    weather += part.Seconds;
+            return Math.Max(0, latenessSeconds - weather);
+        }
+
         public static int PunctualityReliabilityDelta(int latenessSeconds)
         {
             if (latenessSeconds <= OnTimeGraceSeconds) return 1;

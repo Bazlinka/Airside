@@ -116,6 +116,7 @@ namespace Airside.Simulation
         public const long DestinationTurnaroundSeconds = 40 * 60;
         public const long AiStandTurnaroundSeconds = 45 * 60;
         public const long RunwaySeparationSeconds = 90;
+
         public const long GoAroundCircuitSeconds = 4 * 60;
         /// <summary>
         /// Floor between pushback clearances on one apron. The live gate waits until
@@ -1018,9 +1019,10 @@ namespace Airside.Simulation
                 delay = aircraft.PushbackDelay
                         ?? DelayBreakdown.Parse(aircraft.PushbackLatenessSeconds.Value, null);
                 aircraft.PushbackDelay = null;
-                CareerState.ApplyPunctuality(
-                    FlightEconomics.PunctualityReliabilityDelta(aircraft.PushbackLatenessSeconds.Value));
-                CareerState.RecordPushback(aircraft.PushbackLatenessSeconds.Value <= FlightEconomics.OnTimeGraceSeconds);
+                // Delay the weather caused is not the airline's doing: it neither costs reliability nor breaks the streak.
+                var controllable = FlightEconomics.ControllableLateness(aircraft.PushbackLatenessSeconds.Value, delay.Value);
+                CareerState.ApplyPunctuality(FlightEconomics.PunctualityReliabilityDelta(controllable));
+                CareerState.RecordPushback(controllable <= FlightEconomics.OnTimeGraceSeconds);
                 aircraft.PushbackLatenessSeconds = null;
             }
 

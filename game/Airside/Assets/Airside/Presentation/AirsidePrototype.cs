@@ -563,6 +563,7 @@ namespace Airside.Presentation
             Application.logMessageReceived -= RecordAgentRuntimeError;
             ExitOutstationView(false);
             ReleaseCockpitAirflow();
+            ReleaseDirectionalSky();
             if (_cockpitInterior != null)
             {
                 _cockpitInterior.Leave();

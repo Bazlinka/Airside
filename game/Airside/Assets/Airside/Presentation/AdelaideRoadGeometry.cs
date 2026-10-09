@@ -119,6 +119,30 @@ namespace Airside.Presentation
             TriangleCount += 1;
         }
 
+        /// <summary>A solid face with its true normal; optional back face for thin vegetation.</summary>
+        public void SolidTriangle(float ax, float ay, float az, float bx, float by, float bz,
+            float cx, float cy, float cz, RoadColor color, bool twoSided = false)
+        {
+            var ex = bx-ax; var ey = by-ay; var ez = bz-az;
+            var fx = cx-ax; var fy = cy-ay; var fz = cz-az;
+            var nx = ey*fz-ez*fy; var ny = ez*fx-ex*fz; var nz = ex*fy-ey*fx;
+            var length = (float)Math.Sqrt(nx*nx+ny*ny+nz*nz);
+            if (length < 1e-7f) return;
+            nx /= length; ny /= length; nz /= length;
+            var tile = TileAt((ax+bx+cx)/3f,(az+bz+cz)/3f);
+            void Face(bool back)
+            {
+                var first = tile.VertexCount; var sign = back ? -1f : 1f;
+                AddVertex(tile,ax,ay,az,color,nx*sign,ny*sign,nz*sign);
+                AddVertex(tile,back ? cx : bx,back ? cy : by,back ? cz : bz,color,nx*sign,ny*sign,nz*sign);
+                AddVertex(tile,back ? bx : cx,back ? by : cy,back ? bz : cz,color,nx*sign,ny*sign,nz*sign);
+                tile.Triangles.Add(first); tile.Triangles.Add(first+1); tile.Triangles.Add(first+2);
+                VertexCount += 3; TriangleCount++;
+            }
+            Face(false);
+            if (twoSided) Face(true);
+        }
+
         /// <summary>
         /// A closed-topped box without a bottom, standing on y0: centre (cx, cz), long axis (ux, uz) (unit), half sizes
         /// along and across it, and a height. Flat-shaded: each face has its own vertices and outward normal.

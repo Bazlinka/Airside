@@ -4,12 +4,12 @@ namespace Airside.Presentation
 {
     /// <summary>
     /// Low multi-lobe coastal scrub bushes for West Beach dunes (ADR 0218).
-    /// Two 4-sided lobes → 16 tris; no tall trunk.
+    /// Two to three irregular lobes, at most 30 tris; no tall trunk.
     /// </summary>
     public static class AdelaideDuneScrubGeometry
     {
-        public const int MaxBushTriangles = 16;
-        public const int LobeCount = 2;
+        public const int MaxBushTriangles = 30;
+        public const int MaxLobes = 3;
         public const int SidesPerLobe = 4;
 
         private static readonly RoadColor Leaf = RoadColor.Srgb(0.48f, 0.52f, 0.36f, 1f);
@@ -25,37 +25,50 @@ namespace Airside.Presentation
 
         private static void DrawBush(RoadMeshSink sink, RoadBuildOptions o, AdelaideDuneScrubPlacement.Site site)
         {
-            var y0 = o.Height(site.X, site.Z) + o.YOffset;
             var h = site.HeightMetres;
             var r = site.RadiusMetres;
-            // Two low lobes: primary + slightly offset side clump.
-            DrawLobe(sink, site.X, y0, site.Z, r, h, site.YawRad, Leaf);
-            var ox = (float)Math.Cos(site.YawRad + 1.1f) * r * 0.45f;
-            var oz = (float)Math.Sin(site.YawRad + 1.1f) * r * 0.45f;
-            DrawLobe(sink, site.X + ox, y0, site.Z + oz, r * 0.7f, h * 0.85f, site.YawRad + 0.6f, LeafShade);
+            var seed = Frac(site.X*.137f+site.Z*.071f);
+            var lobes = seed > .56f ? MaxLobes : 2;
+            for (var lobe = 0; lobe < lobes; lobe++)
+            {
+                var shape = Frac(seed*7.31f+lobe*.317f);
+                var angle = site.YawRad+lobe*2.3f+shape*.7f;
+                var offset = lobe == 0 ? 0f : r*(.22f+shape*.28f);
+                var x = site.X+(float)Math.Cos(angle)*offset;
+                var z = site.Z+(float)Math.Sin(angle)*offset;
+                var radius = r*(lobe == 0 ? 1f : .48f+shape*.24f);
+                var height = h*(lobe == 0 ? .90f+shape*.10f : .53f+shape*.27f);
+                var tint = .88f+shape*.16f;
+                var baseColour = lobe == 0 ? Leaf : LeafShade;
+                var colour = new RoadColor(baseColour.R*tint,baseColour.G*tint,baseColour.B*tint,1f);
+                DrawLobe(sink,x,o.Height(x,z)+o.YOffset,z,radius,height,angle,colour,shape);
+            }
         }
 
         private static void DrawLobe(RoadMeshSink sink, float cx, float y0, float cz,
-            float radius, float height, float spin, RoadColor colour)
+            float radius, float height, float spin, RoadColor colour, float shape)
         {
             var ring = y0 + height * 0.55f;
             var apex = y0 + height;
             var low = y0 + height * 0.08f;
-            var step = (float)(Math.PI * 2.0 / SidesPerLobe);
-            for (var k = 0; k < SidesPerLobe; k++)
+            var sides = shape > .5f ? 5 : SidesPerLobe;
+            var step = (float)(Math.PI * 2.0 / sides);
+            for (var k = 0; k < sides; k++)
             {
                 var a0 = spin + k * step;
                 var a1 = spin + (k + 1) * step;
-                var r0 = radius * (k % 2 == 0 ? 1f : 0.82f);
-                var r1 = radius * ((k + 1) % 2 == 0 ? 1f : 0.82f);
+                var r0 = radius * (.75f+Frac(shape*11.3f+k*.379f)*.25f);
+                var r1 = radius * (.75f+Frac(shape*11.3f+((k+1)%sides)*.379f)*.25f);
                 var px = cx + (float)Math.Cos(a0) * r0;
                 var pz = cz + (float)Math.Sin(a0) * r0;
                 var qx = cx + (float)Math.Cos(a1) * r1;
                 var qz = cz + (float)Math.Sin(a1) * r1;
-                // Upper facets only (low scrub silhouette) — 2 tris × 4 sides = 8 per lobe.
-                sink.Tri(px, ring, pz, qx, ring, qz, cx, apex, cz, colour);
-                sink.Tri(px, ring, pz, qx, ring, qz, cx, low, cz, colour);
+                // Closed low scrub lobe with true outward face normals.
+                sink.SolidTriangle(qx, ring, qz, px, ring, pz, cx+radius*.12f, apex, cz, colour);
+                sink.SolidTriangle(px, ring, pz, qx, ring, qz, cx, low, cz, colour);
             }
         }
+
+        private static float Frac(float value) => value-(float)Math.Floor(value);
     }
 }

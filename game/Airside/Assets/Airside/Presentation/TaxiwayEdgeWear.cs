@@ -6,18 +6,20 @@ namespace Airside.Presentation
     /// <summary>A short darkened strip just inside one taxiway pavement edge.</summary>
     public readonly struct TaxiwayWearStrip
     {
-        public TaxiwayWearStrip(float startX, float startZ, float endX, float endZ)
+        public TaxiwayWearStrip(float startX, float startZ, float endX, float endZ, float widthMetres = TaxiwayEdgeWear.WidthMetres)
         {
             StartX = startX;
             StartZ = startZ;
             EndX = endX;
             EndZ = endZ;
+            Width = widthMetres;
         }
 
         public float StartX { get; }
         public float StartZ { get; }
         public float EndX { get; }
         public float EndZ { get; }
+        public float Width { get; }
         public float Length => (float)Math.Sqrt((EndX - StartX) * (EndX - StartX) + (EndZ - StartZ) * (EndZ - StartZ));
     }
 
@@ -51,31 +53,52 @@ namespace Airside.Presentation
 
                 dx /= length;
                 dz /= length;
-                var insetOffset = taxiwayHalfWidth - WidthMetres * 0.65f;
                 var normalX = -dz;
                 var normalZ = dx;
 
                 for (var side = -1; side <= 1; side += 2)
                 {
                     var phase = Phase(ax, az, bx, bz, side) * PatchStrideMetres;
-                    for (var patch = phase - PatchStrideMetres; patch < length; patch += PatchStrideMetres)
+                    var patchNumber = 0;
+                    for (var patch = phase - PatchStrideMetres; patch < length;)
                     {
+                        var variation = phase*.173f+patchNumber++*.618034f;
+                        variation -= (float)Math.Floor(variation);
+                        var patchLength = PatchLengthMetres*(.48f+variation*.52f);
+                        var width = WidthMetres*(.55f+variation*.45f);
                         var start = Math.Max(0f, patch);
-                        var end = Math.Min(length, patch + PatchLengthMetres);
-                        if (end - start < 1.5f)
-                            continue;
-
-                        var ox = normalX * insetOffset * side;
-                        var oz = normalZ * insetOffset * side;
-                        result.Add(new TaxiwayWearStrip(
-                            ax + dx * start + ox,
-                            az + dz * start + oz,
-                            ax + dx * end + ox,
-                            az + dz * end + oz));
+                        var end = Math.Min(length, patch + patchLength);
+                        if (end-start >= 1.5f)
+                        {
+                            var offset = taxiwayHalfWidth-width*(.58f+variation*.4f);
+                            var ox = normalX*offset*side; var oz = normalZ*offset*side;
+                            result.Add(new TaxiwayWearStrip(ax+dx*start+ox,az+dz*start+oz,
+                                ax+dx*end+ox,az+dz*end+oz,width));
+                        }
+                        patch += PatchStrideMetres*(.78f+variation*.44f);
                     }
                 }
             }
 
+            return result;
+        }
+
+        /// <summary>Tapered six-point wear island; every point stays inside the strip width.</summary>
+        public static float[] Corners(TaxiwayWearStrip strip)
+        {
+            var length=strip.Length;
+            if (length<1e-5f) return Array.Empty<float>();
+            var dx=(strip.EndX-strip.StartX)/length; var dz=(strip.EndZ-strip.StartZ)/length;
+            var seed=Phase(strip.StartX,strip.StartZ,strip.EndX,strip.EndZ,1);
+            var mid=.37f+seed*.24f;
+            var along=new[] {0f,mid,1f,1f,mid,0f};
+            var across=new[] {-.2f,-.5f,-.28f,.18f,.5f,.25f};
+            var result=new float[12];
+            for(var i=0;i<6;i++)
+            {
+                result[i*2]=strip.StartX+dx*length*along[i]-dz*strip.Width*across[i];
+                result[i*2+1]=strip.StartZ+dz*length*along[i]+dx*strip.Width*across[i];
+            }
             return result;
         }
 

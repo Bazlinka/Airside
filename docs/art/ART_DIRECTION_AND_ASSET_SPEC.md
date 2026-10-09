@@ -528,3 +528,16 @@ oval, with shared vertices for smooth normals and outer joins following the
 existing wing sections. All other finished model geometry remains identical.
 Project-owned source, zero cost, prior git fallback; native appearance and
 performance unverified. Evidence: `docs/testing/dash8-wing-fairing-2026-10-09.md`.
+
+
+## Physical ground detail — 9 October 2026
+
+Task #693 adds original grass tufts on existing mapped landside planting anchors,
+varied coastal scrub shapes and fitted apron drain rims/bars; taxiway edge wear is
+varied/tapered. Keep the 160-cluster/3,840-triangle grass cap and 30-triangle scrub
+cap. Use true geometric face normals; retain whole-cluster road/pavement/airport
+clearance. This is authored visual detail, not surveyed tuft/drain condition data.
+Existing OSM/terrain geometry, material/source registrations and approved asset
+paths remain. New pure C# builders carry metadata; no external asset/model/texture.
+Integrated with focused geometry checks; native rendering/performance unverified.
+Decision: `2026-10-09-physical-ground-detail`.

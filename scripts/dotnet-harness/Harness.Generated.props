@@ -28,6 +28,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideTerrainHeights.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideTreeGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideTreeLod.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideVergeDetail.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideWalkwayGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideWindbreakGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideWindbreakPlacement.cs" />
@@ -65,6 +66,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideTerrainField.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideVisualBaselineViews.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApproachGear.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronDrainGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronServiceSchedule.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronSlabJoints.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronSurfaceWear.cs" />
@@ -318,6 +320,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundLegSeamTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundMotionSmoothnessTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundMotionTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundPhysicalDetailTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundRouterTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundSeparationTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundServiceRunTests.cs" />

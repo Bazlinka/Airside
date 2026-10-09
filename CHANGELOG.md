@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-09 — Add roadside grass, varied coastal scrub, flush apron drain grates and tapered taxiway-edge wear; retain operational clearance (Unity unverified).
+
 - 2026-10-09 — Add hidden agent gameplay runner: batched feature checks, private saves, real frames, build reuse and optional accelerated round trip.
 - 2026-10-09 — Forecast wind now follows the weather (fog near-calm, rain breezy, storm strong and gusty, clear a little lighter) and eases between hours; live-observed wind unchanged (headless-tested; unverified in Unity).
 - 2026-10-09 — Clouds gain sunlit thin edges, deeper storm self-shadowing, eased silhouettes and density-based fades (Unity unverified).

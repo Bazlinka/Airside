@@ -13,6 +13,8 @@ Mac build/four-step parked A350 player check pass, no runtime errors. Evidence/l
 **Report-only bug hunt (9 Oct, Codex, #717):** 15 findings/evidence: `docs/testing/bug-hunt-2026-10-09/README.md`.
 Tested aec64616 at 40×, no fixes; capture inversion subsequently fixed. Reproduce remaining findings on current main; UX/normal-speed limits are explicit.
 Fix pass (Claude, issues #722/#723/#724/#725/#726 = findings 1/14/7/2/15): #1 interior audio sources now exist before their low-pass filters (fixed; see PR/changelog).
+Fix status (Claude, one PR each; Unity unverified, quick headless checks only): #3 guide Away wording follows
+Outbound/AtDestination/Inbound (#720).
 
 **Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
 F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;

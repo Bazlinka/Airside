@@ -267,6 +267,15 @@ namespace Airside.Presentation
                 return;
             }
 
+            var requiredTier = RouteAccess.RequiredTier(band);
+            if (operations.CareerState != null && operations.CareerState.Tier < requiredTier)
+            {
+                AvailabilityLine = $"{BandLabel(band)} route. You need the {requiredTier} tier to fly it";
+                AvailabilityTone = HudTone.Muted;
+                PlanBlockedReason = AvailabilityLine;
+                return;
+            }
+
             // The band the route needs, not the ceiling of the aircraft looking at it: a
             // Dash 8 on a Kingscote hop is flying a Regional route, not a Domestic one.
             AvailabilityLine = $"{BandLabel(band)} route. You can fly it";

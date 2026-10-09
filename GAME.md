@@ -7,6 +7,12 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
+F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;
+readable scrolling Options and current-view targeting. Operational weather, live time, economics and saves unchanged.
+Checks: 25/25 headless, 2/2 focused native, Mac build, actual title Fog/Storm interactions and airport Fog rendering.
+Evidence and remaining limits: `docs/testing/welcome-polish-2026-10-09/README.md`.
+
 **Physical ground detail (9 Oct, Codex, #693):** mapped roadside grass clears airport
 surfaces and nearby roads; coastal scrub gains varied lobes/colour and face normals.
 Drains gain flush rims/grates; taxiway wear gains tapered, varied patches. No layout,
@@ -193,11 +199,9 @@ tools' open work are preserved in
 
 ## Current milestone
 
-Airside is a live-time airline management game set inside an autonomous Adelaide Airport (YPAD) — see
-`docs/product/PROJECT_PLAN.md` (v4.0). The player owns and grows an airline from a Saab 340 starter fleet; Adelaide
-keeps running around them with its real runways, taxiways, stands, roads, car parks and terminal, a real 24-hour day,
-live weather and a curfew. There is a title screen, first-time airline setup, a Glass Cockpit HUD and a saved career
-(a self-led 100–150 hour path, ADR 0120).
+Airside is a live-time airline management game at autonomous Adelaide Airport (YPAD); see `docs/product/PROJECT_PLAN.md` (v4.0).
+Grow an airline from a Saab 340 starter fleet while Adelaide runs around it: real runways, taxiways, stands, roads, car parks and terminal,
+a 24-hour day, live weather and curfew. Title/setup, Glass Cockpit HUD and a saved 100–150-hour self-led career (ADR 0120) are present.
 
 The ground and surroundings are built from open data (OpenStreetMap, Sentinel-2, Copernicus DEM); the map overhaul
 (ADR 0184, PR #459) completed the road network, car parks and precinct furniture. The newest work is listed in the
@@ -208,11 +212,9 @@ derived from those speeds, never picked. The camera orbits, zooms and pans freel
 
 ## Visual asset contract
 
-The approved visual direction, exact asset paths, animation responsibilities and
-production order live in
-`docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` (decision 0022). The first playable
-moves from procedural primitives to approved art in batches, with primitives kept
-as fallbacks during integration.
+The approved visual direction, asset paths, animation responsibilities and production order live in
+`docs/art/ART_DIRECTION_AND_ASSET_SPEC.md` (decision 0022). Approved art replaces procedural primitives
+in batches, with primitives kept as fallbacks during integration.
 
 The immediate visual target is a premium stylised-realism miniature of a regional
 Australian airport. Generated images establish composition, palette, fictional

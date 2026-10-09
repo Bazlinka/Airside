@@ -70,7 +70,7 @@ namespace Airside.Presentation
                 BuildAtmosphereLayers();
             if (_atmosphereRoot == null || _mainCamera == null)
                 return;
-            if (!AirsideSettings.Current.WeatherLayers)
+            if (!WorldWeatherVisible)
             {
                 HideAtmosphereLayers();
                 return;
@@ -174,6 +174,15 @@ namespace Airside.Presentation
 
         private void UpdateStormLightning()
         {
+            if (!WorldWeatherVisible)
+            {
+                _stormStrikePending = false;
+                _stormThunder.Clear();
+                if (_stormBolt != null) _stormBolt.enabled = false;
+                if (_thunderAudio != null) _thunderAudio.Stop();
+                Shader.SetGlobalFloat("_AirsideLightningFlash", 0f);
+                return;
+            }
             var flash = CurrentWeather == WeatherKind.Storm && AirsideSettings.Current.WeatherLayers
                 ? LightningFlashEnvelope(Time.unscaledTime - _lightningFlashAt) : 0f;
             if (_stormStrikePending)

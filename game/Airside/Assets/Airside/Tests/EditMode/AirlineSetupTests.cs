@@ -14,6 +14,19 @@ namespace Airside.Tests
     public sealed class AirlineSetupTests
     {
         [Test]
+        public void EditedCodeCanBeClearedWithoutResurrectingTheSuggestion()
+        {
+            var setup = new AirlineSetupModel();
+            setup.EditCode("abé1c");
+            Assert.That(setup.EffectiveCode, Is.EqualTo("ABC"));
+            Assert.That(setup.CodeValid, Is.True);
+            setup.EditCode("");
+            Assert.That(setup.EffectiveCode, Is.Empty);
+            Assert.That(setup.CanAdvance, Is.False);
+            setup.EditCode("xy");
+            Assert.That(setup.CanAdvance, Is.True);
+        }
+        [Test]
         public void Wizard_WalksThreeCardsAndOnlyAdvancesPastValidOnes()
         {
             var setup = new AirlineSetupModel { Name = "" };

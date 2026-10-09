@@ -69,7 +69,7 @@ namespace Airside.Presentation
         {
             var weather = CurrentWeather;
             var look = CurrentWeatherLook;
-            var raining = look.IsRaining;
+            var raining = WorldWeatherVisible && look.IsRaining;
             var wet = Weather.IsAdverse(weather) || look.Wetness > 0.05f;
             var storm = weather == WeatherKind.Storm;
 
@@ -644,7 +644,7 @@ namespace Airside.Presentation
             // (thinner for a high camera). The compact QA scene keeps its own small-scale density.
             {
                 var look = CurrentWeatherLook;
-                RenderSettings.fog = true;
+                RenderSettings.fog = WorldWeatherVisible;
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
                 RenderSettings.fogColor = ToColor(_atmosphere.Fog);
                 RenderSettings.fogDensity = AirsideBareField.Enabled
@@ -665,7 +665,7 @@ namespace Airside.Presentation
             // ADR 0059: a storm strike briefly overrides the sky/ambient/sun with a white
             // flash that decays over ~0.5 s of real time, independent of the steady weather
             // gloom set above — that is the storm's baseline dimness, this is one instant.
-            var flash = CurrentWeather == WeatherKind.Storm && AirsideSettings.Current.WeatherLayers
+            var flash = CurrentWeather == WeatherKind.Storm && WorldWeatherVisible
                 ? LightningFlashEnvelope(Time.unscaledTime - _lightningFlashAt) : 0f;
             if (flash > 0f)
             {
@@ -1252,7 +1252,7 @@ namespace Airside.Presentation
             if (_cloudRoot == null)
                 return;
 
-            var layers = AirsideSettings.Current.WeatherLayers;
+            var layers = WorldWeatherVisible;
             _cloudRoot.gameObject.SetActive(layers);
             if (_cloudUmbraRoot != null) _cloudUmbraRoot.gameObject.SetActive(layers);
             if (!layers) return;

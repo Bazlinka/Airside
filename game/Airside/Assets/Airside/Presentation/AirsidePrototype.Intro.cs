@@ -22,6 +22,9 @@ namespace Airside.Presentation
 
         private bool IntroActive => _cameraController != null && _cameraController.IsPlayingIntro;
 
+        // The welcome illustration is a separate surface, not a camera inside live weather.
+        private bool WorldWeatherVisible => !AirlineSetupOpen && AirsideSettings.Current.WeatherLayers;
+
         private readonly SplashModel _splash = new();
         private readonly HudDrawList _splashDrawList = new();
         private string _introGreeting = string.Empty;
@@ -42,7 +45,7 @@ namespace Airside.Presentation
                 return false;
 
             var mouse = Mouse.current;
-            if (keyboard.anyKey.wasPressedThisFrame
+            if ((keyboard != null && keyboard.anyKey.wasPressedThisFrame)
                 || (mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)))
                 _cameraController.SkipIntro();
             return true;
@@ -154,7 +157,8 @@ namespace Airside.Presentation
         {
             ProbeSavedAirline();
             FillSplashModel();
-            var splashLayout = SplashLayout.Create(layout.Viewport.x, layout.Viewport.y, _splash.Step, _splash.HasSave);
+            var splashLayout = SplashLayout.Create(layout.Viewport.x, layout.Viewport.y, _splash.Step, _splash.HasSave,
+                !string.IsNullOrEmpty(_splash.SaveError));
             SplashPainter.Paint(_splashDrawList, splashLayout, _splash, AirsideSettings.Current.OpeningAnimation ? Mathf.Clamp01(Time.unscaledTime / 40f) : 0f);
 
             var enabled = GUI.enabled;
@@ -198,12 +202,7 @@ namespace Airside.Presentation
             var typed = GUI.TextField(HudPainter.ToRect(setupLayout.CodeField), shown, 3, codeStyle);
             if (typed != shown)
             {
-                var letters = new System.Text.StringBuilder(3);
-                foreach (var c in typed)
-                    if (char.IsLetter(c) && letters.Length < 3)
-                        letters.Append(char.ToUpperInvariant(c));
-                setup.Code = letters.ToString();
-                setup.CodeEdited = setup.Code.Length > 0;
+                setup.EditCode(typed);
             }
 
             if (interactive && Event.current.type == EventType.Repaint && string.IsNullOrEmpty(GUI.GetNameOfFocusedControl()))
@@ -213,7 +212,10 @@ namespace Airside.Presentation
         private void FillSplashModel()
         {
             _splash.HasSave = _savedAirline != null;
-            _splash.SaveError = _saveError ?? string.Empty;
+            _splash.SoundOn = !_audioMuted;
+            _splash.SaveError = _saveRecoveredFromBackup
+                ? "Recovered your previous save. Continue to resume that version."
+                : _saveError ?? string.Empty;
             _splash.ClockText = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, AirlineClock.Adelaide).ToString("HH:mm");
             if (_savedAirline == null)
                 return;
@@ -255,9 +257,7 @@ namespace Airside.Presentation
                     OpenManual(0);
                     return;
                 case SplashPainter.Options:
-                    _menuOpen = true;
-                    _optionsOpen = true;
-                    PlayUiClick();
+                    OpenOptionsMenu();
                     return;
                 case SplashPainter.Quit:
                     QuitGame();
@@ -307,12 +307,25 @@ namespace Airside.Presentation
         {
             if (!AirlineSetupOpen || _menuOpen)
                 return;
+            if (keyboard.f1Key.wasPressedThisFrame)
+            {
+                if (_controlsHelpOpen) ToggleControlsHelp(); else OpenManual(0);
+                return;
+            }
             if (_controlsHelpOpen)
             {
                 if (keyboard.rightArrowKey.wasPressedThisFrame)
                     PageManual(1);
                 if (keyboard.leftArrowKey.wasPressedThisFrame)
                     PageManual(-1);
+                return;
+            }
+            // M remains text in the name/code fields; on the title menu it mutes sound.
+            if (_splash.Step == SplashStep.Menu && keyboard.mKey.wasPressedThisFrame)
+            {
+                _audioMuted = !_audioMuted;
+                ApplySettingsAndSave();
+                ApplyMasterMute();
                 return;
             }
             if (!keyboard.enterKey.wasPressedThisFrame && !keyboard.numpadEnterKey.wasPressedThisFrame)

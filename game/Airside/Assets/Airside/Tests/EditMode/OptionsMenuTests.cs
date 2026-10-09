@@ -6,6 +6,20 @@ namespace Airside.Tests
 {
     public sealed class OptionsMenuTests
     {
+        [Test]
+        public void CompactOptionsKeepDescriptionsClearOfTheNextRowAndFooter()
+        {
+            var model = new OptionsMenuModel();
+            for (var i = 0; i < 6; i++) model.Rows.Add(new OptionsRow("Labels", "ON", "A wrapped description.", "row:" + i));
+            var viewport = OptionsMenuPainter.RowsViewport(OptionsMenuPainter.Panel(800f, 600f));
+            Assert.That(model.Rows.Count * OptionsMenuPainter.RowHeight, Is.GreaterThan(viewport.Height), "runtime must scroll rather than compress");
+            var draw = new HudDrawList();
+            OptionsMenuPainter.PaintRows(draw, new HudBox(0f, 0f, viewport.Width - 18f, model.Rows.Count * OptionsMenuPainter.RowHeight), model);
+            var details = draw.Commands.Where(c => c.Kind == HudDrawKind.Text && c.Text == "A wrapped description.").ToArray();
+            for (var i = 1; i < details.Length; i++)
+                Assert.That(details[i - 1].Box.Bottom, Is.LessThan(i * OptionsMenuPainter.RowHeight));
+            Assert.That(draw.Commands.Count(c => c.Kind == HudDrawKind.Button), Is.EqualTo(6));
+        }
         [TestCase(800f, 600f)]
         [TestCase(1024f, 640f)]
         [TestCase(1440f, 900f)]

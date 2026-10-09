@@ -25,6 +25,7 @@ namespace Airside.Presentation
     public static class OptionsMenuPainter
     {
         public const string Back = "options:back";
+        public const float RowHeight = 68f;
         public static readonly string[] Sections = { "General", "Camera", "Views", "Display", "World", "Notifications" };
 
         public static HudBox Panel(float width, float height)
@@ -34,7 +35,10 @@ namespace Airside.Presentation
             return new HudBox((width - w) * 0.5f, (height - h) * 0.5f, w, h);
         }
 
-        public static void Paint(HudDrawList into, HudBox panel, OptionsMenuModel model)
+        public static HudBox RowsViewport(HudBox panel) =>
+            new(panel.X + 24f, panel.Y + 134f, panel.Width - 48f, Math.Max(1f, panel.Height - 216f));
+
+        public static void Paint(HudDrawList into, HudBox panel, OptionsMenuModel model, bool paintRows = true)
         {
             into.Clear();
             into.Surface(panel, 0.98f);
@@ -50,7 +54,7 @@ namespace Airside.Presentation
 
             var rowHeight = Math.Min(68f, (panel.Height - 204f) / Math.Max(1, model.Rows.Count));
             var buttonWidth = Math.Min(160f, width * 0.28f);
-            for (var i = 0; i < model.Rows.Count; i++)
+            for (var i = 0; paintRows && i < model.Rows.Count; i++)
             {
                 var row = model.Rows[i];
                 var y = panel.Y + 134f + i * rowHeight;
@@ -66,6 +70,25 @@ namespace Airside.Presentation
                 "Changes save automatically.", 11f, HudTone.Muted, HudTextStyle.Wrap);
             into.Button(new HudBox(panel.Right - 184f, panel.Bottom - 58f, 160f, 36f),
                 model.FromTitle ? "BACK TO TITLE" : "BACK", Back, HudButtonStyle.Primary);
+        }
+
+        /// <summary>Uncompressed rows for the runtime's clipped scroll area.</summary>
+        public static void PaintRows(HudDrawList into, HudBox content, OptionsMenuModel model)
+        {
+            into.Clear();
+            var buttonWidth = Math.Min(160f, content.Width * 0.28f);
+            var labelWidth = content.Width - buttonWidth - 18f;
+            for (var i = 0; i < model.Rows.Count; i++)
+            {
+                var row = model.Rows[i];
+                var y = content.Y + i * RowHeight;
+                into.Text(new HudBox(content.X, y, labelWidth, 20f), row.Label, 15f, HudTone.Default, HudTextStyle.Bold);
+                into.Text(new HudBox(content.X, y + 23f, labelWidth, 28f), row.Detail, 11f, HudTone.Muted, HudTextStyle.Wrap);
+                into.Button(new HudBox(content.Right - buttonWidth, y + 3f, buttonWidth, 34f),
+                    row.Value, row.Action, HudButtonStyle.Secondary);
+                if (i + 1 < model.Rows.Count)
+                    into.Line(content.X, y + RowHeight - 8f, content.Right, y + RowHeight - 8f, HudTone.Muted, 1f);
+            }
         }
     }
 }

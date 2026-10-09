@@ -53,9 +53,22 @@ namespace Airside.Presentation
         public bool NameValid => TrimmedName.Length > 0 && TrimmedName.Length <= NameLimit;
 
         /// <summary>The code in use: the player's own once typed, otherwise one suggested from the name.</summary>
-        public string EffectiveCode => CodeEdited && !string.IsNullOrWhiteSpace(Code)
-            ? Code.Trim().ToUpperInvariant()
+        public string EffectiveCode => CodeEdited
+            ? (Code ?? string.Empty).Trim().ToUpperInvariant()
             : FlightNumber.SuggestCode(TrimmedName);
+
+        /// <summary>Flight codes use the same ASCII letters accepted by Airline.IsValidCode.</summary>
+        public void EditCode(string value)
+        {
+            var letters = new System.Text.StringBuilder(3);
+            foreach (var c in value ?? string.Empty)
+            {
+                var upper = char.ToUpperInvariant(c);
+                if (upper >= 'A' && upper <= 'Z' && letters.Length < 3) letters.Append(upper);
+            }
+            Code = letters.ToString();
+            CodeEdited = true;
+        }
 
         public bool CodeValid => Airline.IsValidCode(EffectiveCode) && !IsTakenCode(EffectiveCode);
 

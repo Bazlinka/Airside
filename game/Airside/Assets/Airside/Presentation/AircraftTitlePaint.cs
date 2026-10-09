@@ -183,6 +183,11 @@ namespace Airside.Presentation
             if (Is(type, AircraftType.Boeing78710))
                 return new AircraftIdentityMarkingLayout(2.36f, 7.34f, -8.95f, 2.54f, 7.04f, -57.75f, 0.233f, 0.101f, 34.77f, 28.07f, 23.22f);
             // </generated title layout>
+            // The Bell's cabin is glazed and its sliding doors are large, so its marks sit on the tail boom
+            // (authored in generate-air-017-bell-412.py: boom half-width ~0.4-0.6 m, centre height ~2.1-2.4 m).
+            // Placed from those numbers, not fitted to the mesh; check at the exterior camera.
+            if (Is(type, AircraftType.Bell412))
+                return new AircraftIdentityMarkingLayout(0.60f, 2.22f, -3.40f, 0.44f, 2.38f, -6.60f, 0.028f, 0.022f, 0f, 0f, 3.0f);
             // Unknown or primitive-fallback types: the ATR's regional fuselage.
             return For(AircraftType.Atr42);
         }

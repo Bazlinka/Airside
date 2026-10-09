@@ -13,8 +13,8 @@ Mac build/four-step parked A350 player check pass, no runtime errors. Evidence/l
 **Second report-only collection (9 Oct, Codex, #751/#753):** fifteen additional findings (16–30), no fixes;
 `docs/testing/bug-hunt-second-2026-10-09/README.md`. First seven: clean 0cca70b3; remaining eight: clean 4c24425c native private-career evidence, 40× allowance.
 Collection complete; QA player closed. Severity, reproduction and runner/normal-speed limits are explicit. Reproduce on current main before fixes.
-Code fixes (Claude, no tests or native runs, per Bailey): high/medium findings 16, 17, 19, 20, 21, 22, 23, 26 (one commit each). Unverified in Unity and not compiled;
-#26 adds a MORE OFFERS pager and #23 sets the Bell 412 freight payload to 1.5 t (judgement). Low findings (18, 24, 25, 27-30) untouched.
+Code fixes (Claude, no tests or native runs, per Bailey; compiles against Unity's libraries): all of findings 16-30 except 21's visual check. Medium/high in #755; low (18, 24, 25, 27-30) in the follow-up PR.
+#26 adds a MORE OFFERS pager, #23 sets the Bell 412 freight payload to 1.5 t, and #28 places Bell title/registration on the tail boom from generator numbers (judgement, look at it in Exterior).
 
 **Report-only bug hunt (9 Oct, Codex, #717):** 15 findings/evidence: `docs/testing/bug-hunt-2026-10-09/README.md`.
 Tested aec64616 at 40×, no fixes; capture inversion subsequently fixed. Reproduce remaining findings on current main; UX/normal-speed limits are explicit.

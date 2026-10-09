@@ -127,8 +127,11 @@ namespace Airside.Simulation
 
             var start = StartSeconds(aircraft, now, baseLevel);
             var elapsed = now.ElapsedSeconds - start;
+            // A booking made hours ahead has not started yet: no crew is working, so do not
+            // report fuelling. RemainingSeconds is the wait until the crew starts.
             if (elapsed < 0)
-                elapsed = 0;
+                return new DeparturePrepStatus(DeparturePrepStage.Idle, 0, false, "Waiting to start",
+                    0, 0, 0, 0, -elapsed);
 
             var fuel = Scale(aircraft.Type, FuelSeconds, baseLevel);
             var catering = Scale(aircraft.Type, CateringSeconds, baseLevel);

@@ -47,7 +47,7 @@ namespace Airside.Presentation
         }
         private bool WatchingJourney(string id) => InCockpit && id == _cockpitAircraftId
             && _fleetAircraftById.TryGetValue(id, out var aircraft) && CanWatchJourney(aircraft)
-            || _cameraController != null && _cameraController.FollowTarget != null
+            || _cameraController != null && _cameraController.IsFollowing && _cameraController.FollowTarget != null
                 && _fleetViewById.TryGetValue(id, out var followedView)
                 && followedView == _cameraController.FollowTarget;
 
@@ -74,7 +74,9 @@ namespace Airside.Presentation
             var x=0.0; var z=0.0; var altitude=0.0;
             FleetAircraft aircraft = null;
             var active=InCockpit && _fleetAircraftById.TryGetValue(_cockpitAircraftId,out aircraft);
-            var watchView = active ? _cockpitView : _cameraController?.FollowTarget;
+            // The camera keeps its last target after Overview; only an active follow may pull the flight world away.
+            var watchView = active ? _cockpitView
+                : _cameraController != null && _cameraController.IsFollowing ? _cameraController.FollowTarget : null;
             if (!active && watchView != null)
                 foreach (var pair in _fleetViewById)
                     if (pair.Value == watchView && _fleetAircraftById.TryGetValue(pair.Key, out aircraft))

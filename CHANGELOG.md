@@ -138,6 +138,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Fix bug-hunt findings 16, 17, 19-23 and 26: contract bonus forecast, pinned booking time, recovery dispatch, tier gate, overview restore, check-aware contracts, Bell payload, offer paging (unverified in Unity).
+
 - Refine fleet engine mouths with recessed liners and fitted control hinges; preserve aircraft geometry envelopes, animation pivots and saves (#716).
 
 - Hold storm departures at their stands; taxi-released aircraft continue and arrivals already on extended final retain their landing timer (#670).

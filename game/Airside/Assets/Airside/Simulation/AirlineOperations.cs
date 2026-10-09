@@ -973,7 +973,9 @@ namespace Airside.Simulation
             var leg = aircraft.CurrentDestination is { } away ? AirborneSeconds(aircraft, away) : 0;
             return aircraft.State switch
             {
-                FleetState.AtStand => 0,
+                // A parked aircraft in its check is not free until the check ends.
+                FleetState.AtStand => aircraft.CheckUntil is { } checkEnds
+                    ? Math.Max(0, checkEnds.ElapsedSeconds - now) : 0,
                 FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff =>
                     phaseLeft + 2 * leg + DestinationTurnaroundSeconds + ContractFeasibility.GroundSeconds,
                 FleetState.Outbound => phaseLeft + DestinationTurnaroundSeconds + leg + ContractFeasibility.GroundSeconds / 2,

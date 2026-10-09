@@ -266,6 +266,7 @@ namespace Airside.Presentation
         public const string UpgradeBase = "base:upgrade";
         public const string CareerRoadmap = "career:roadmap";
         public const string ContractMarket = "career:offers";
+        public const string NextOfferPage = "contract:page";
         public const string PinGoalPrefix = "career:pin:";
         public const string StandPrefix = "stand:";
 

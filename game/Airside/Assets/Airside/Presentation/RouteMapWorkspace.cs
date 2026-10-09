@@ -211,7 +211,11 @@ namespace Airside.Presentation
             var changeCost = dispatch - alreadyPaid;
             var forecast = operations.Forecast(operations.Home, destination, aircraft);
             BandAndDistance += $" · {forecast.LoadText}";
-            var pay = FlightPlanner.ExpectedRevenue(operations, operations.Home, destination, type, aircraft);
+            // The contract bonus only counts if this schedule is back before the commitment expires.
+            var plannedDepart = AirlineOperations.WholeMinute(now.Advance(FlightPlanner.ClampDelay(departureDelaySeconds, aircraft, now)));
+            var plannedBack = FlightPlanner.Estimate(aircraft, operations.AirborneSeconds(aircraft, destination), plannedDepart).BackAtAdelaide;
+            var missesDeadline = FlightPlanner.MissesContractDeadline(operations, plannedBack);
+            var pay = FlightPlanner.ExpectedRevenue(operations, operations.Home, destination, type, aircraft, plannedBack);
             var active = operations.CareerState.ActiveContract;
             if (active != null
                 && operations.CareerState.TryFindDefinition(active.DefinitionId, out var contract)
@@ -222,7 +226,9 @@ namespace Airside.Presentation
                 if (active.CompletedRotations + 1 >= contract.RequiredRotations)
                     contractPay += contract.CompletionReward;
 
-                OperatingNote = contract.ReliabilityLossOnCancel > 0
+                OperatingNote = missesDeadline
+                    ? "This departure is back after the contract expires, so it pays no contract bonus"
+                    : contract.ReliabilityLossOnCancel > 0
                     ? $"Contract +${contractPay:N0} · abandoning costs {contract.ReliabilityLossOnCancel} reliability"
                     : $"Contract +${contractPay:N0} on return";
             }
@@ -261,6 +267,15 @@ namespace Airside.Presentation
                 return;
             }
 
+            var requiredTier = RouteAccess.RequiredTier(band);
+            if (operations.CareerState != null && operations.CareerState.Tier < requiredTier)
+            {
+                AvailabilityLine = $"{BandLabel(band)} route. You need the {requiredTier} tier to fly it";
+                AvailabilityTone = HudTone.Muted;
+                PlanBlockedReason = AvailabilityLine;
+                return;
+            }
+
             // The band the route needs, not the ceiling of the aircraft looking at it: a
             // Dash 8 on a Kingscote hop is flying a Regional route, not a Domestic one.
             AvailabilityLine = $"{BandLabel(band)} route. You can fly it";
@@ -290,7 +305,10 @@ namespace Airside.Presentation
                 return;
             }
 
-            if (operations.CareerState.Funds + alreadyPaid < dispatch)
+            // A recovery contract underwrites its own first dispatch (the same test the booking command uses).
+            var recoveryCredit = alreadyPaid == 0
+                                 && operations.CareerState.CanUnderwriteRecoveryDispatch(dispatch, destination.Code);
+            if (operations.CareerState.Funds + alreadyPaid < dispatch && !recoveryCredit)
             {
                 PlanBlockedReason =
                     $"{(alreadyPaid > 0 ? "The change" : "This flight")} costs ${changeCost:N0}. You have ${operations.CareerState.Funds:N0}";

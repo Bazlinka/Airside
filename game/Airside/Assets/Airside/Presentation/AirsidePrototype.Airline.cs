@@ -82,6 +82,8 @@ namespace Airside.Presentation
         private string _selectedAircraftId;
         private Destination? _mapSelection;
         private long _departureDelaySeconds = 15 * 60;
+        // A booked flight keeps its absolute time while it is reviewed; a relative delay would drift with the clock.
+        private SimulationTime? _plannerBookedDepartAt;
         private string _mapMessage;
         private long _seenEvents;
         private long _seenSettlements;
@@ -1652,12 +1654,20 @@ namespace Airside.Presentation
             PlayUiClick();
         }
 
+        /// <summary>The picker's delay: pinned to the booked time while reviewing a booking, else the chosen offset.</summary>
+        private long PlannerDelaySeconds(FleetAircraft aircraft) =>
+            _plannerBookedDepartAt.HasValue && aircraft != null && aircraft.Scheduled.HasValue
+                ? FlightPlanner.ClampDelay(_plannerBookedDepartAt.Value.ElapsedSeconds - _clock.Now.ElapsedSeconds, aircraft, _clock.Now)
+                : _departureDelaySeconds;
+
         private void SetPlanningAircraft(FleetAircraft aircraft, bool force = false)
         {
             if (!force && ReferenceEquals(aircraft, _mapAircraft))
                 return;
             _mapAircraft = aircraft;
             _mapMessage = null;
+            _plannerBookedDepartAt = aircraft != null && aircraft.Scheduled.HasValue
+                ? aircraft.Scheduled.Value.DepartAt : (SimulationTime?)null;
             // An aircraft with a plan reopens on it, so "Change plan" starts from what is booked.
             if (aircraft != null && aircraft.Scheduled.HasValue)
             {
@@ -1812,7 +1822,7 @@ namespace Airside.Presentation
 
             // Surface, title and the destination detail pane come from the shared painter;
             // the live map inside it keeps its own zoom, pan, tracking and pointer handling.
-            _routeMapWorkspace.Rebuild(_operations, aircraft, _mapSelection, _departureDelaySeconds,
+            _routeMapWorkspace.Rebuild(_operations, aircraft, _mapSelection, PlannerDelaySeconds(aircraft),
                 _clock.Now, _mapFilter);
             RouteMapWorkspacePainter.Paint(_workspaceDrawList, _routeMapWorkspace, workspaceLayout, showDetail: _mapFlightInspectorId == null);
             var chromeAction = _hudPainter.Draw(_workspaceDrawList);
@@ -2635,12 +2645,13 @@ namespace Airside.Presentation
             _contractsWorkspace.Rebuild(_operations, _clock.Now);
             var layout = ContractsWorkspaceLayout.Create(Box(rect), _contractsWorkspace.ActiveTerms.Count);
             ContractsWorkspacePainter.Paint(_workspaceDrawList, _contractsWorkspace, layout,
-                _highlightedContractId);
+                _highlightedContractId, _contractOfferPage);
             _workspaceDrawList.Button(HudShellPainter.HeaderActionBox(Box(rect)),
                 "CAREER", HudAction.CareerRoadmap, HudButtonStyle.Secondary);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
+        private int _contractOfferPage;
         private float _abandonArmedUntil;
 
         /// <summary>Two clicks within five seconds, so a stray click never costs reliability.</summary>
@@ -2771,6 +2782,10 @@ namespace Airside.Presentation
                 case HudAction.CancelContract:
                     AbandonContractFromHud();
                     return;
+                case HudAction.NextOfferPage:
+                    _contractOfferPage++;
+                    PlayUiClick();
+                    return;
                 case HudAction.CareerRoadmap:
                     _careerProfileView = false;
                     SetWorkspace(HudWorkspace.Stats);
@@ -2893,11 +2908,13 @@ namespace Airside.Presentation
                     CycleSelection(-1);
                     return;
                 case HudAction.NextDeparture:
-                    _departureDelaySeconds = FlightPlanner.StepDelay(_departureDelaySeconds, 1);
+                    _departureDelaySeconds = FlightPlanner.StepDelay(PlannerDelaySeconds(_mapAircraft), 1);
+                    _plannerBookedDepartAt = null;
                     PlayUiClick();
                     return;
                 case HudAction.PreviousDeparture:
-                    _departureDelaySeconds = FlightPlanner.StepDelay(_departureDelaySeconds, -1);
+                    _departureDelaySeconds = FlightPlanner.StepDelay(PlannerDelaySeconds(_mapAircraft), -1);
+                    _plannerBookedDepartAt = null;
                     PlayUiClick();
                     return;
                 case HudAction.ClearDestination:
@@ -3177,10 +3194,11 @@ namespace Airside.Presentation
                 return;
             // Booked on a whole minute, so the board's HH:mm and "LATE +N" agree (ADR 0137).
             var departAt = AirlineOperations.WholeMinute(_clock.Now.Advance(
-                FlightPlanner.ClampDelay(_departureDelaySeconds, _mapAircraft, _clock.Now)));
+                FlightPlanner.ClampDelay(PlannerDelaySeconds(_mapAircraft), _mapAircraft, _clock.Now)));
             var result = _operations.ScheduleDeparture(_mapAircraft, _mapSelection.Value, departAt);
             if (result.Accepted)
             {
+                _plannerBookedDepartAt = departAt;
                 ShowToast($"{_mapAircraft.Registration} leaves for {_mapSelection.Value.Name} at {ClockText(departAt)}. "
                           + "Follow it under Your flights.");
                 // Leave the planner on the booked aircraft: it is selected (no camera move) and tops the tracker.

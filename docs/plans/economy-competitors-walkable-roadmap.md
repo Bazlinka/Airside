@@ -1,6 +1,6 @@
 # Economy v2, competitor airlines and a walkable airport — roadmap
 
-**Status:** proposal for Bailey's sign-off. Planning only; no game code changes. Changing the approved plan needs his approval (`AGENTS.md`).
+**Status:** approved by Bailey 9 Oct 2026 (assumptions 4–6 confirmed). Planning only; no game code changes. Changing the approved plan needs his approval (`AGENTS.md`).
 **Date:** 9 October 2026. **Supersedes the open question in** `economy_realism_plan.md` §4 (Bailey chose **A, real-world scale**, 9 Oct).
 **Bailey's goal:** make the game more immersive, with more to do — a real economy, rival airlines, and eventually walking around the airport.
 
@@ -11,9 +11,9 @@
 | 1 | Real-world dollar scale (economy plan option A) | **Decided by Bailey, 9 Oct** |
 | 2 | Competitor airlines in the economy | **Decided by Bailey, 9 Oct** |
 | 3 | Walkable airport, as a later phase | **Decided by Bailey, 9 Oct** |
-| 4 | A bad stretch must not hard-lock a save: negative cash triggers the existing recovery contract and a bank loan, never game over | *Assumption — confirm* |
-| 5 | Loans and a moving fuel price are in the first economy pass | *Assumption — confirm* |
-| 6 | Difficulty stays a cost multiplier; Hard additionally gets fuel volatility | *Assumption — confirm* |
+| 4 | A bad stretch must not hard-lock a save: negative cash triggers the existing recovery contract and a bank loan, never game over | **Confirmed by Bailey, 9 Oct** |
+| 5 | Loans and a moving fuel price are in the first economy pass | **Confirmed by Bailey, 9 Oct** |
+| 6 | Difficulty stays a cost multiplier; Hard additionally gets fuel volatility | **Confirmed by Bailey, 9 Oct** |
 
 ## 1. Why this order
 

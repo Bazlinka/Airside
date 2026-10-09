@@ -401,6 +401,7 @@ namespace Airside.Presentation
                     if (renderer.name.StartsWith("rescue_red", StringComparison.Ordinal)
                         || renderer.name.StartsWith("livery_", StringComparison.Ordinal))
                         SetRendererColor(renderer, AircraftLiveryPaint.Colour(renderer.name, accent));
+                EnsureAircraftIdentityMarkings(view, airline, type, registration, freighter, accent);
                 return;
             }
 

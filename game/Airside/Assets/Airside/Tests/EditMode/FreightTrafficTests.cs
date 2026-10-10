@@ -186,7 +186,11 @@ namespace Airside.Tests
             }
             Assert.That(ops.Fleet.Where(a => a.Airline.IsFreightCarrier).All(a => a.CompletedTrips > 0), Is.True);
             Assert.That(ops.TotalSettlements, Is.Zero);
-            Assert.That(ops.CareerState.Funds, Is.EqualTo(funds));
+            // Freight earns the player nothing. The only money movement is the founding Saab's daily insurance (Economy v2).
+            var insurance = FlightCostModel.StandingPerDay(AircraftType.Saab340, owned: true);
+            Assert.That(ops.CareerState.Funds, Is.LessThanOrEqualTo(funds));
+            Assert.That(ops.CareerState.Funds, Is.GreaterThanOrEqualTo(funds - (long)System.Math.Ceiling(insurance * 3)),
+                "two nights cost at most a few days of the Saab's insurance and nothing else");
         }
     }
 }

@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-11 — Economy v2: route planner prices the booking at its departure day's fuel and shows the fuel % in 'Pay now'; CareerBot now borrows for deposits and repays.
 - 2026-10-11 — Economy v2 step 4: seeded daily fuel price (±15%, Demanding ±40%) in dispatch cost, priced by departure day so cancels refund exactly; Stats BORROW/REPAY 250K buttons. No save change.
 - 2026-10-11 — Economy v2 step 3: tier-capped bank loan (8.5%/yr) that covers a cash shortfall and funds a deposit gap from BUY; owed amount on stats/operations lines; save v26.
 - 2026-10-10 — Economy v2 step 2: daily lease and insurance per aircraft (founding Saab insurance only), catch-up safe, cash floored at zero; save v25; Fleet cards show deposit and lease per day.

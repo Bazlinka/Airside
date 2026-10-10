@@ -340,6 +340,8 @@ namespace Airside.Tests
             var types = _ops.PlayerOwnedTypes();
             var reserve = Reserve(fleet);
             var wantType = DesiredType(goals, types);
+            if (Career.Loan > 0 && Career.Funds > Career.Loan + reserve * 3)
+                _ops.RepayLoan(Career.Funds - reserve * 3 - 1);
             bool OwnsReach(RouteBand band) => types.Any(t => RouteAccess.Ceiling(t) >= band);
             var wantAircraft = goals.Contains("regional-fleet") || goals.Contains("established-fleet")
                                || goals.Contains("domestic-jet") || goals.Contains("international-widebody")
@@ -370,8 +372,14 @@ namespace Airside.Tests
 
             // Saving for an aircraft that is in reach of the goal: don't spend the money on a base.
             // …and enough to fly the new aircraft once on its usual kind of route.
-            if (Career.Funds < offer.Price + reserve + _ops.DispatchCost(wantType, FlightEconomics.TypicalLegKm(wantType)))
-                return;
+            var needed = offer.Price + reserve + _ops.DispatchCost(wantType, FlightEconomics.TypicalLegKm(wantType));
+            if (Career.Funds < needed)
+            {
+                // A sensible lessee finances the gap, but never beyond half the bank's limit.
+                var gap = needed - Career.Funds;
+                if (Career.Loan + gap > Career.LoanCap / 2 || !_ops.TakeLoan(gap).Accepted)
+                    return;
+            }
             if (adelaide < Career.Base.FleetCapacity && PlayerBase.Supports(Career.BaseLevel, wantType))
             {
                 Record(_ops.BuyAircraft(wantType));

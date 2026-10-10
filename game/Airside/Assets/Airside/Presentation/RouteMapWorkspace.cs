@@ -204,7 +204,8 @@ namespace Airside.Presentation
                 ? $"{type.Name} can fly this"
                 : $"{type.Name} can't fly this route";
 
-            var dispatch = operations.DispatchCost(type, km);
+            var plannedDepart = AirlineOperations.WholeMinute(now.Advance(FlightPlanner.ClampDelay(departureDelaySeconds, aircraft, now)));
+            var dispatch = operations.DispatchCost(type, km, plannedDepart);
             var alreadyPaid = aircraft.Scheduled.HasValue
                 ? operations.DispatchCost(type, operations.DistanceKm(aircraft.Scheduled.Value.Destination),
                     aircraft.Scheduled.Value.PublishedAt)
@@ -213,7 +214,6 @@ namespace Airside.Presentation
             var forecast = operations.Forecast(operations.Home, destination, aircraft);
             BandAndDistance += $" · {forecast.LoadText}";
             // The contract bonus only counts if this schedule is back before the commitment expires.
-            var plannedDepart = AirlineOperations.WholeMinute(now.Advance(FlightPlanner.ClampDelay(departureDelaySeconds, aircraft, now)));
             var plannedBack = FlightPlanner.Estimate(aircraft, operations.AirborneSeconds(aircraft, destination), plannedDepart).BackAtAdelaide;
             var missesDeadline = FlightPlanner.MissesContractDeadline(operations, plannedBack);
             var pay = FlightPlanner.ExpectedRevenue(operations, operations.Home, destination, type, aircraft, plannedBack);
@@ -237,7 +237,7 @@ namespace Airside.Presentation
             ProfitTone = pay >= dispatch ? HudTone.Positive : HudTone.Caution;
             DispatchLine = alreadyPaid > 0
                 ? $"Change  {(changeCost >= 0 ? "+" : "−")}${Math.Abs(changeCost):N0}"
-                : $"Pay now ${dispatch:N0}";
+                : $"Pay now ${dispatch:N0} · fuel {FuelNote(operations, plannedDepart)}";
             ReturnLine = $"Expected return ${pay:N0}";
             if (Maintenance.IsDueSoon(aircraft))
             {
@@ -339,6 +339,14 @@ namespace Airside.Presentation
             if (minutes < 60)
                 return $"{minutes} min";
             return minutes % 60 == 0 ? $"{minutes / 60} h" : $"{minutes / 60} h {minutes % 60} min";
+        }
+
+        /// <summary>The fuel price on the departure day against its baseline, e.g. "+4%".</summary>
+        private static string FuelNote(AirlineOperations operations, SimulationTime departAt)
+        {
+            var pct = (int)Math.Round((FuelPrice.Ratio(DemandEvents.DayOf(departAt, operations.Clock),
+                operations.CareerState.Difficulty) - 1.0) * 100.0);
+            return (pct >= 0 ? "+" : "−") + Math.Abs(pct) + "%";
         }
     }
 

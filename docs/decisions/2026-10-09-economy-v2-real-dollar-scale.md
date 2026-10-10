@@ -83,7 +83,8 @@ realistic overheads. Bailey left the choice to the team ("up to you"), and this 
 - Stats workspace: BORROW 250K / REPAY 250K buttons beside EXPAND BASE (hidden if the left column is under 460 px) and a fuel-price line.
   The commands clamp, so repeated clicks are safe. **Not seen in Unity**: layout and wording are unverified natively.
 - Tests: `FuelPriceTests` (3); `AirlineCareerTests` now compute the expected cost with `ops.DispatchCost`.
-- Still open: `CareerBot` does not borrow; a competent-bot pacing rerun (see Step 2 open item); competitor airlines (roadmap phase 2).
+- Follow-up: the route map prices 'Pay now' at the planned departure day and shows the fuel %; `CareerBot` borrows a deposit gap (up to half the cap) and repays surplus cash.
+- Still open: no `CareerBot` pacing rerun with borrowing yet; a competent-bot pacing rerun (see Step 2 open item); competitor airlines (roadmap phase 2).
 
 ### Real `CareerBot` comparison (Standard difficulty, 150 open hours, seed 1; old economy = `main` before this change)
 

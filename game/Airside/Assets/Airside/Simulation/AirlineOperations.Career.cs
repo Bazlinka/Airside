@@ -267,6 +267,59 @@ namespace Airside.Simulation
                         $"Achievement: {milestone.Title}."));
         }
 
+        // ---- Standing costs (Economy v2) ---------------------------------------------------------------------------------------
+
+        /// <summary>The last Adelaide day whose lease and insurance has been paid. Null until the first day is observed.</summary>
+        private long? _standingPaidThroughDay;
+
+        internal long? SaveStandingPaidDay() => _standingPaidThroughDay;
+        internal void RestoreStandingPaidDay(long? day) => _standingPaidThroughDay = day;
+
+        /// <summary>
+        /// Lease and insurance across the whole player fleet for one day, flying or parked. The founding aircraft is owned and
+        /// pays insurance only. Everything else is leased (<see cref="LeaseTerms"/>).
+        /// </summary>
+        public long DailyStandingCost()
+        {
+            double total = 0;
+            foreach (var aircraft in _fleet)
+                if (aircraft.Airline.IsPlayer)
+                    total += FlightCostModel.StandingPerDay(aircraft.Type, aircraft.IsFoundingAircraft);
+            foreach (var aircraft in _outstationFleet)
+                total += FlightCostModel.StandingPerDay(aircraft.Type, false);
+            return (long)Math.Round(total);
+        }
+
+        /// <summary>
+        /// Pays lease and insurance once per Adelaide day. Charged by day index, so a long away catch-up pays every missed day
+        /// exactly once and the result does not depend on how the clock was stepped. Cash never goes below zero here: a
+        /// shortfall is reported, and the bank loan and recovery contract are what carry a cash crunch.
+        /// </summary>
+        private void ChargeStandingCosts(long day)
+        {
+            if (CareerState == null)
+                return;
+            if (!_standingPaidThroughDay.HasValue)
+            {
+                _standingPaidThroughDay = day;
+                return;
+            }
+
+            var days = day - _standingPaidThroughDay.Value;
+            if (days <= 0)
+                return;
+            _standingPaidThroughDay = day;
+            var due = DailyStandingCost() * days;
+            if (due <= 0)
+                return;
+            var paid = CareerState.PayStanding(due);
+            _today.Cost += paid;
+            var text = paid >= due
+                ? $"Leases and insurance: ${paid:N0} paid for {days} day{(days == 1 ? "" : "s")}."
+                : $"Leases and insurance came to ${due:N0}; only ${paid:N0} was available. Fly or borrow to catch up.";
+            _careerEvents.Add(new CareerEvent(CareerEventKind.News, CareerState.Tier, text));
+        }
+
         /// <summary>The day ledger as plain values, for the save (ADR 0138).</summary>
         internal DaySnapshot SaveToday() => new(_today.Flights, _today.Revenue, _today.Cost, _today.BestCode,
             _today.BestMargin, _today.StartReliability, _today.LateFlights, _today.LateSeconds, _reportedDay);
@@ -282,6 +335,7 @@ namespace Airside.Simulation
                 return;
             _today.StartReliability ??= CareerState.Reliability;
             var day = DemandEvents.DayOf(now, Clock);
+            ChargeStandingCosts(day);
             if (_newsDay != day)
             {
                 _newsDay = day;

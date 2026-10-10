@@ -56,7 +56,8 @@ namespace Airside.Simulation
         // Older saves use deterministic weather and rebuild presentation.
         // v24 (ADR 2026-10-09-economy-v2-real-dollar-scale): money is in real Australian dollars. Older saves have every
         // money amount multiplied once on load by FlightCostModel.LegacySaveMoneyScale (see AirlineSave.ScaleLegacyMoney).
-        public const int CurrentVersion = 24;
+        // v25: the last Adelaide day whose lease and insurance was paid. Older saves start paying from the day they load.
+        public const int CurrentVersion = 25;
 
         public int Version = CurrentVersion;
 
@@ -152,6 +153,10 @@ namespace Airside.Simulation
         public long ReportedDay;
         public int HighReliabilityStreak;
         public List<int> RecentReliability = new();
+
+        // ---- Standing costs (v25) --------------------------------------------------
+        public bool HasStandingPaidDay;
+        public long StandingPaidThroughDay;
 
         // ---- Career stats (v9) -----------------------------------------------------
         public long CareerLifetimeRevenue;
@@ -339,6 +344,9 @@ namespace Airside.Simulation
             data.ServedDestinationCodes.AddRange(operations.CareerState.ServedDestinations);
             data.OutstationBaseCodes.AddRange(operations.CareerState.OutstationBases);
             data.RecentServiceMargins.AddRange(operations.CareerState.RecentServiceMargins);
+            var standingDay = operations.SaveStandingPaidDay();
+            data.HasStandingPaidDay = standingDay.HasValue;
+            data.StandingPaidThroughDay = standingDay ?? 0;
             var day = operations.SaveToday();
             data.DayFlights = day.Flights;
             data.DayRevenue = day.Revenue;
@@ -799,6 +807,11 @@ namespace Airside.Simulation
                     data.DayLateFlights, data.DayLateSeconds,
                     data.HasReportedDay ? data.ReportedDay : null));
             }
+
+            // v25: resume the lease and insurance ledger where it stopped. Older saves leave it null, so nothing is charged
+            // retroactively; the first day observed after loading becomes the starting point.
+            if (data.Version >= 25)
+                operations.RestoreStandingPaidDay(data.HasStandingPaidDay ? data.StandingPaidThroughDay : null);
 
             if (data.Version >= 13)
             {

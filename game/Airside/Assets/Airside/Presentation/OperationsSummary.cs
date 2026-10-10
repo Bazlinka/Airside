@@ -99,6 +99,17 @@ namespace Airside.Presentation
     /// </summary>
     public static class OperationsSummary
     {
+        /// <summary>Lease and insurance for the aircraft in <paramref name="playerFleet"/> (Adelaide fleet), per day.</summary>
+        private static long LeasesPerDay(IEnumerable<FleetAircraft> playerFleet)
+        {
+            double total = 0;
+            if (playerFleet != null)
+                foreach (var aircraft in playerFleet)
+                    if (aircraft != null)
+                        total += FlightCostModel.StandingPerDay(aircraft.Type, aircraft.IsFoundingAircraft);
+            return (long)System.Math.Round(total);
+        }
+
         /// <summary>
         /// The most urgent aircraft's situation; failing that, the active contract's progress;
         /// failing that, a quiet fleet-wide line. <paramref name="playerFleet"/> in any order —
@@ -142,7 +153,7 @@ namespace Airside.Presentation
             var g = goal.Value;
             if (string.IsNullOrEmpty(g.Id))
                 return new CareerObjective("Keep the airline flying",
-                    $"${career.Funds:N0} on hand · {career.Reliability}% reliability", 0f, next, nextSeverity);
+                    $"${career.Funds:N0} on hand · {career.Reliability}% reliability · leases ${LeasesPerDay(playerFleet):N0}/day", 0f, next, nextSeverity);
             var finale = career.FinaleReached;
             return new CareerObjective(
                 finale ? "Established airline" : g.Title,

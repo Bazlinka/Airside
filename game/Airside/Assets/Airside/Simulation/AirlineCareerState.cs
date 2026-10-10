@@ -217,6 +217,19 @@ namespace Airside.Simulation
             return true;
         }
 
+        /// <summary>
+        /// Pays lease and insurance as far as cash allows and returns what was paid. Never overdraws: the recovery logic
+        /// relies on non-negative cash.
+        /// </summary>
+        internal long PayStanding(long amount)
+        {
+            if (amount <= 0 || Funds <= 0)
+                return 0;
+            var paid = Math.Min(Funds, amount);
+            Funds -= paid;
+            return paid;
+        }
+
         internal void RefundDispatch(long cost)
         {
             if (cost > 0)

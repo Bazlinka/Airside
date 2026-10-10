@@ -293,6 +293,13 @@ namespace Airside.Simulation
         /// <summary>Standing cost of holding a leased aircraft for one day, flying or not.</summary>
         public static double StandingPerDay(AircraftType type) => LeasePerDay(type) + InsurancePerDay(type);
 
+        /// <summary>
+        /// What one aircraft costs the airline per day: lease plus insurance, or insurance only for an owned aircraft (the
+        /// founding Saab 340 is owned outright).
+        /// </summary>
+        public static double StandingPerDay(AircraftType type, bool owned) =>
+            owned ? InsurancePerDay(type) : StandingPerDay(type);
+
         public static long LeaseDeposit(AircraftType type) => LeaseTerms.Deposit(type);
 
         public static double LoanInterestPerDay(long balance) =>

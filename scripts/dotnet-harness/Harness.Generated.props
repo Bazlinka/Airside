@@ -394,6 +394,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/StandChoiceAndBoardHistoryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/StandNamesTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/StandOilStainsTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/StandingCostTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/StatsWorkspaceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TaxiCrossingAndQueueTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TaxiLoopFixture.cs" />

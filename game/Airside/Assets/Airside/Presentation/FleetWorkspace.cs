@@ -517,7 +517,7 @@ namespace Airside.Presentation
                     else if (career.CompletedPlayerRotations < offer.RequiredRotations)
                         requirement = $"Needs {offer.RequiredRotations} flight{(offer.RequiredRotations == 1 ? "" : "s")}. You have flown {career.CompletedPlayerRotations}";
                     else if (!affordable)
-                        requirement = $"Costs ${offer.Price:N0}. You have ${career.Funds:N0}";
+                        requirement = $"Needs a ${offer.Price:N0} lease deposit. You have ${career.Funds:N0}";
                     else
                         requirement = readyLine;
 
@@ -536,7 +536,7 @@ namespace Airside.Presentation
                     var refusal = operations.PurchaseRefusal(offer.Type, buyBase, ignoreFunds: true);
                     unlocked = refusal == null;
                     requirement = refusal != null ? refusal
-                        : !affordable ? $"Costs ${offer.Price:N0}. You have ${career.Funds:N0}"
+                        : !affordable ? $"Needs a ${offer.Price:N0} lease deposit. You have ${career.Funds:N0}"
                         : readyLine;
                     standLine = "Delivered to " + FleetStatusText.NameOf(buyBase) + " and flies from there";
                 }
@@ -1618,11 +1618,12 @@ namespace Airside.Presentation
                     HudTextStyle.Bold);
                 var warn = offer.CanBuy && offer.CashWarning.Length > 0;
                 var line = warn ? offer.CashWarning
-                    : offer.CanBuy ? offer.StandLine : shared != null ? offer.BandLabel + " routes" : offer.RequirementLine;
+                    : offer.CanBuy ? offer.StandLine + $" · lease ${(long)System.Math.Round(FlightCostModel.StandingPerDay(offer.Type)):N0}/day"
+                    : shared != null ? offer.BandLabel + " routes" : offer.RequirementLine;
                 into.Text(new HudBox(textX, box.Y + 29f, textWidth, 30f), line, 11f,
                     warn ? HudTone.Caution : offer.CanBuy || shared != null ? HudTone.Muted : HudTone.Caution,
                     HudTextStyle.Wrap);
-                into.Text(new HudBox(textX, box.Bottom - 25f, textWidth - 82f, 18f), $"${offer.Price:N0}", 14f,
+                into.Text(new HudBox(textX, box.Bottom - 25f, textWidth - 82f, 18f), $"${offer.Price:N0} deposit", 14f,
                     offer.Affordable ? HudTone.Default : HudTone.Muted, HudTextStyle.Bold);
                 into.Button(new HudBox(box.Right - 76f, box.Bottom - 30f, 68f, 26f), "BUY",
                     HudAction.Buy(offer.Type.Id), HudButtonStyle.Primary, offer.CanBuy);

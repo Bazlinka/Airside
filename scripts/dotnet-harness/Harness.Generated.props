@@ -349,6 +349,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/LiveClockTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/LiveTrafficTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/LiveWeatherTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/LoanTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/MaintenanceJourneyTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/MaintenanceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/MapGeographyTests.cs" />

@@ -309,15 +309,62 @@ namespace Airside.Simulation
             if (days <= 0)
                 return;
             _standingPaidThroughDay = day;
-            var due = DailyStandingCost() * days;
+            var standing = DailyStandingCost() * days;
+            var interest = (long)Math.Round(FlightCostModel.LoanInterestPerDay(CareerState.Loan) * days);
+            var due = standing + interest;
             if (due <= 0)
                 return;
+
             var paid = CareerState.PayStanding(due);
+            var shortfall = due - paid;
+            long borrowed = 0;
+            if (shortfall > 0)
+            {
+                // Cash ran short: the bank covers it up to the cap, so the airline is never locked out.
+                borrowed = CareerState.Borrow(shortfall);
+                var topUp = CareerState.PayStanding(shortfall);
+                paid += topUp;
+                shortfall -= topUp;
+                if (shortfall > 0 && interest > 0)
+                    CareerState.CapitaliseInterest(Math.Min(shortfall, interest));
+            }
+
             _today.Cost += paid;
-            var text = paid >= due
-                ? $"Leases and insurance: ${paid:N0} paid for {days} day{(days == 1 ? "" : "s")}."
-                : $"Leases and insurance came to ${due:N0}; only ${paid:N0} was available. Fly or borrow to catch up.";
+            var text = $"Leases and insurance{(interest > 0 ? " and loan interest" : "")}: ${paid:N0} paid for {days} day{(days == 1 ? "" : "s")}.";
+            if (borrowed > 0)
+                text += $" Cash ran short, so ${borrowed:N0} was borrowed (loan ${CareerState.Loan:N0} of ${CareerState.LoanCap:N0}).";
+            if (shortfall > 0)
+                text += $" ${shortfall:N0} could not be covered. Fly profitable routes or repay debt.";
             _careerEvents.Add(new CareerEvent(CareerEventKind.News, CareerState.Tier, text));
+        }
+
+        /// <summary>Borrow from the bank, within the tier's cap. Interest is charged daily with leases.</summary>
+        public CommandResult TakeLoan(long amount)
+        {
+            if (CareerState == null || PlayerAirline == null)
+                return CommandResult.Refused("No player airline.");
+            if (amount <= 0)
+                return CommandResult.Refused("Choose an amount to borrow.");
+            if (CareerState.LoanHeadroom <= 0)
+                return CommandResult.Refused(
+                    $"You owe ${CareerState.Loan:N0}, the most the bank allows at the {CareerState.Tier} tier (${CareerState.LoanCap:N0}).");
+            CareerState.Borrow(amount);
+            return CommandResult.Ok;
+        }
+
+        /// <summary>Repay part or all of the loan from cash on hand.</summary>
+        public CommandResult RepayLoan(long amount)
+        {
+            if (CareerState == null || PlayerAirline == null)
+                return CommandResult.Refused("No player airline.");
+            if (CareerState.Loan <= 0)
+                return CommandResult.Refused("You have no loan to repay.");
+            if (amount <= 0)
+                return CommandResult.Refused("Choose an amount to repay.");
+            if (CareerState.Funds <= 0)
+                return CommandResult.Refused("You have no cash to repay with.");
+            CareerState.Repay(amount);
+            return CommandResult.Ok;
         }
 
         /// <summary>The day ledger as plain values, for the save (ADR 0138).</summary>

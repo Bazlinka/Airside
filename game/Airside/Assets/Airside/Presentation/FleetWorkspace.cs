@@ -78,8 +78,9 @@ namespace Airside.Presentation
     {
         public FleetMarketOffer(AircraftType type, string typeName, string bandLabel, long price,
             string requirementLine, string standLine, bool affordable, bool unlocked, bool fleetFull,
-            string cashWarning = null)
+            string cashWarning = null, long borrowNeeded = 0)
         {
+            BorrowNeeded = Math.Max(0, borrowNeeded);
             CashWarning = cashWarning ?? string.Empty;
             Type = type;
             TypeName = typeName ?? string.Empty;
@@ -113,8 +114,17 @@ namespace Airside.Presentation
         public bool Unlocked { get; }
         public bool FleetFull { get; }
 
+        /// <summary>
+        /// What the bank would lend to cover the deposit (Economy v2): set only when the player cannot afford it from cash but
+        /// the loan cap leaves room for the gap plus the aircraft's usual flight. Zero otherwise.
+        /// </summary>
+        public long BorrowNeeded { get; }
+
         /// <summary>Only a purchase the simulation would actually accept is offered as one.</summary>
         public bool CanBuy => Unlocked && Affordable && !FleetFull;
+
+        /// <summary>Buyable by borrowing the gap from the bank.</summary>
+        public bool CanBorrowAndBuy => Unlocked && !Affordable && !FleetFull && BorrowNeeded > 0;
     }
 
     /// <summary>
@@ -550,9 +560,21 @@ namespace Airside.Presentation
                         cashWarning = $"Leaves ${left:N0}. Its usual flight costs about ${usualFlight:N0}";
                 }
 
+                long borrowNeeded = 0;
+                if (!affordable && unlocked)
+                {
+                    var gap = offer.Price - Math.Max(0, career.Funds);
+                    var usualFlight = operations.DispatchCost(offer.Type, FlightEconomics.TypicalLegKm(offer.Type));
+                    if (gap > 0 && gap + usualFlight <= career.LoanHeadroom)
+                    {
+                        borrowNeeded = gap;
+                        requirement = $"Borrow ${gap:N0} from the bank to lease it. You have ${career.Funds:N0}";
+                    }
+                }
+
                 _market.Add(new FleetMarketOffer(offer.Type, spec.Name,
                     RouteMapWorkspaceModel.BandLabel(offer.Operates), offer.Price,
-                    requirement, standLine, affordable, unlocked, fleetFull || (atHome && baseFull), cashWarning));
+                    requirement, standLine, affordable, unlocked, fleetFull || (atHome && baseFull), cashWarning, borrowNeeded));
             }
 
             // ADR 0131: twelve types for sale, three cards at a time — what you can buy leads, then what
@@ -561,7 +583,7 @@ namespace Airside.Presentation
             for (var i = 0; i < _market.Count; i++)
             {
                 var offer = _market[i];
-                var rank = offer.CanBuy ? 0 : offer.Unlocked && !offer.FleetFull ? 1 : 2;
+                var rank = offer.CanBuy ? 0 : offer.CanBorrowAndBuy ? 1 : offer.Unlocked && !offer.FleetFull ? 2 : 3;
                 ordered.Add((rank, i, offer));
             }
             ordered.Sort((a, b) => a.Rank != b.Rank ? a.Rank.CompareTo(b.Rank) : a.Index.CompareTo(b.Index));
@@ -1619,6 +1641,7 @@ namespace Airside.Presentation
                 var warn = offer.CanBuy && offer.CashWarning.Length > 0;
                 var line = warn ? offer.CashWarning
                     : offer.CanBuy ? offer.StandLine + $" · lease ${(long)System.Math.Round(FlightCostModel.StandingPerDay(offer.Type)):N0}/day"
+                    : offer.CanBorrowAndBuy ? offer.RequirementLine
                     : shared != null ? offer.BandLabel + " routes" : offer.RequirementLine;
                 into.Text(new HudBox(textX, box.Y + 29f, textWidth, 30f), line, 11f,
                     warn ? HudTone.Caution : offer.CanBuy || shared != null ? HudTone.Muted : HudTone.Caution,
@@ -1626,7 +1649,7 @@ namespace Airside.Presentation
                 into.Text(new HudBox(textX, box.Bottom - 25f, textWidth - 82f, 18f), $"${offer.Price:N0} deposit", 14f,
                     offer.Affordable ? HudTone.Default : HudTone.Muted, HudTextStyle.Bold);
                 into.Button(new HudBox(box.Right - 76f, box.Bottom - 30f, 68f, 26f), "BUY",
-                    HudAction.Buy(offer.Type.Id), HudButtonStyle.Primary, offer.CanBuy);
+                    HudAction.Buy(offer.Type.Id), HudButtonStyle.Primary, offer.CanBuy || offer.CanBorrowAndBuy);
             }
         }
     }

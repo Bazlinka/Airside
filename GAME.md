@@ -5,10 +5,11 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
-**Economy v2, steps 1-2 (9-10 Oct, Claude):** real Australian dollars. Flight cost/pay from `FlightCostModel`; aircraft "prices" are lease
+**Economy v2, steps 1-3 (9-11 Oct, Claude):** real Australian dollars. Flight cost/pay from `FlightCostModel`; aircraft "prices" are lease
 deposits (`LeaseTerms`); opening cash A$1.5M; save v24 scales old money x35 once; v25 adds daily lease + insurance (founding Saab: insurance
-only; catch-up safe; cash never below zero). Casual `CareerBot` pacing OK (Domestic 33 h). Not done: bank loan + recovery path, native check of
-wide money in the HUD (no Unity run). Open: a competent `CareerBot` stalled on a stand wait after the ground-crew merge; cause unattributed.
+only; catch-up safe; cash never below zero); v26 adds a tier-capped bank loan (8.5%/yr, auto-covers a daily shortfall, BUY borrows a
+deposit gap). Casual `CareerBot` pacing OK (Domestic 33 h). Not done: explicit borrow/repay buttons, native check of wide money and the new
+card text in the HUD (no Unity run). Open: a competent `CareerBot` stalled on a stand wait after the ground-crew merge; cause unattributed.
 Plan: `docs/plans/economy-competitors-walkable-roadmap.md`; decision/evidence: `docs/decisions/2026-10-09-economy-v2-real-dollar-scale.md`.
 
 **Four-engine fleet (#778 / PR #781, Codex, 11 Oct):** passenger B748 747-8

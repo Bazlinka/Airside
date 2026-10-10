@@ -93,7 +93,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void StandingCosts_NeverOverdrawCash()
+        public void ACashShortfall_IsCoveredByTheBankAndNeverOverdraws()
         {
             var (clock, ops) = Start();
             Lease(ops, AircraftType.Dash8Q400);
@@ -103,11 +103,12 @@ namespace Airside.Tests
 
             Advance(clock, ops, 2 * Day);
 
-            Assert.That(ops.CareerState.Funds, Is.EqualTo(0));
+            Assert.That(ops.CareerState.Funds, Is.GreaterThanOrEqualTo(0), "cash never goes negative");
+            Assert.That(ops.CareerState.Loan, Is.GreaterThan(0), "the bank covered what cash could not");
             var told = false;
             while (ops.TryTakeCareerEvent(out var news))
-                told |= news.Text.Contains("only");
-            Assert.That(told, Is.True, "the player is told the leases were not fully covered");
+                told |= news.Text.Contains("borrowed");
+            Assert.That(told, Is.True, "the player is told the bank stepped in");
         }
 
         [Test]

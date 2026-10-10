@@ -60,6 +60,19 @@ realistic overheads. Bailey left the choice to the team ("up to you"), and this 
   a stand: every regional bay is in use"). The same bot ran fine on step 1 before that merge, and the comparison run on current `main` did not
   complete, so the cause is unattributed. Treat the competent-bot result as unverified until it is rerun.
 
+## Step 3 landed (11 Oct 2026): bank loan, save v26
+
+- `AirlineCareerState.Loan`, capped by tier (A$2M / 15M / 80M / 300M), 8.5% a year charged daily with leases. Commands `TakeLoan` and
+  `RepayLoan` (over-asks are clamped, not refused). Save `CurrentVersion` 26; older saves have no loan.
+- **No lock-out:** when daily lease, insurance and interest exceed cash, the bank covers the gap up to the cap and the player is told. Interest
+  that still cannot be paid is added to the balance (it may pass the cap, which only stops new borrowing). Cash never goes negative.
+- **Fleet market:** when a deposit is more than cash but the cap leaves room for the gap plus the aircraft's usual flight, the card says "Borrow
+  $X from the bank to lease it" and the existing BUY button borrows the gap and leases (only if the purchase would otherwise be accepted, so a
+  refused purchase never leaves a loan behind). The stats line and operations line show the amount owed.
+- Tests: `LoanTests` (7), `StandingCostTests` (shortfall now borrows), `FleetWorkspaceTests` (borrow offer and cap).
+- **Not done:** explicit borrow and repay buttons (the commands exist; the HUD has no control yet), a native look at the new card text, and the
+  `CareerBot` does not borrow, so it plays the cash-only economy.
+
 ### Real `CareerBot` comparison (Standard difficulty, 150 open hours, seed 1; old economy = `main` before this change)
 
 | | Regional | Domestic | International | Fleet at 150 h | Cash at 150 h |

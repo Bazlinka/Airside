@@ -236,7 +236,7 @@ namespace Airside.Presentation
 
             AirlineName = operations.PlayerAirline.Name;
             CurrentLiveryHex = operations.PlayerAirline.LiveryHex;
-            FundsLine = $"${career.Funds:N0} on hand";
+            FundsLine = career.Loan > 0 ? $"${career.Funds:N0} on hand · ${career.Loan:N0} owed" : $"${career.Funds:N0} on hand";
             LifetimeRevenueLine = $"${career.LifetimeRevenue:N0} earned";
             ReliabilityLine = $"{career.Reliability}% reliability";
             TierLine = $"{career.Tier} tier";

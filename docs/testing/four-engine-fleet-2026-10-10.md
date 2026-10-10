@@ -17,3 +17,5 @@ Final connectivity audit passes for both models within 5 cm after fixing the out
 Packaged review and integration with newly merged economy v2 are in progress; the counts above precede that merge.
 
 After economy integration: 84 selected headless checks pass; clean universal `4232e064` Mac build succeeds. Exact generator --check passes for glTF/bin/FBX. First B748 packaged follow/day/rear/dusk/night frames inspected; camera attempt correctly refused a cold engine-off cockpit (recorded failed scenario, not a product error). The fixture now grants its injected aircraft the required base and full journeys honor the selected type; nine focused purchase/overflow/save/wake cases and 12 runner regressions pass. Clear shared F overflow avoids a seasonal operator indefinitely blocking leased 18R. Final source/build/frame results pending below.
+
+Native compilation rejected a direct assignment to Simulation's internal base setter in the QA fixture. The corrected fixture uses the public save capture/restore API; no internal visibility or ordinary command rules are widened. The failed intermediate build is not a pass.

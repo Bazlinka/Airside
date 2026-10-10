@@ -135,7 +135,12 @@ namespace Airside.Presentation
             // Opt-in fresh-save fixture: owned injected types need their operational base
             // on return. No purchase, progression or personal save is changed by this QA seed.
             if (_operations.CareerState != null && !PlayerBase.Supports(_operations.CareerState.BaseLevel, type))
-                _operations.CareerState.BaseLevel = PlayerBase.RequiredLevel(type);
+            {
+                var fixture = AirlineSave.Capture(_operations);
+                fixture.PlayerBaseLevel = PlayerBase.RequiredLevel(type).ToString();
+                _operations = AirlineSave.Restore(fixture, _clock);
+                player = _operations.PlayerAirline;
+            }
             var aircraft = _operations.AddAircraft(player, "VH-TS1", type, stand.Value);
             var toIndex = Array.IndexOf(args, "-airsideSoakAddTo");
             if (toIndex >= 0 && toIndex + 1 < args.Length

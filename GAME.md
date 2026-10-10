@@ -22,7 +22,7 @@ new types use shared lease terms (A$4.86M / A$4.05M deposits). Standing-cost/loa
 remains with its owning task. Prior economy and ground-team handoff is archived below.
 
 **Next:** first clean universal build and 84 integrated headless checks pass. Complete
-selected-aircraft engine-start/journey and native save/view review, then merge
+selected-aircraft engine-start/journey and native save/view review (fixture uses save restore), then merge
 this scoped task. Preserve personal saves, running apps and other tools' economy work.
 Standing policy: focused checks chosen automatically; broad suites/soaks on request.
 

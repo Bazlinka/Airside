@@ -21,7 +21,7 @@ namespace Airside.Tests
             var rival = Airline.Rex();
             ops.AddAirline(rival);
             ops.AddAircraft(rival, "VH-ZRC", AircraftType.Saab340, AirlineOperations.AdelaideRegionalBays[1]);
-            ops.RestoreCareerState(20_000, 90, nameof(OperatingTier.Provisional), null, 0, 0,
+            ops.RestoreCareerState(20_000 * FlightCostModel.LegacySaveMoneyScale, 90, nameof(OperatingTier.Provisional), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 6, baseLevel: PlayerBaseLevel.ExpandedRegional);
             ops.AddAircraft(ops.PlayerAirline, "VH-SUN", AircraftType.Atr42,
                 AirlineOperations.AdelaideRegionalBays[2]);
@@ -126,7 +126,7 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now, plane.Registration);
             Assert.That(model.SelectedCapability.Any(line => line.StartsWith("Maintenance outsourced")), Is.True);
 
-            ops.RestoreCareerState(20_000, 100, nameof(OperatingTier.Provisional), null, 0, 0,
+            ops.RestoreCareerState(20_000 * FlightCostModel.LegacySaveMoneyScale, 100, nameof(OperatingTier.Provisional), null, 0, 0,
                 Array.Empty<string>(), completedPlayerRotations: 4,
                 baseLevel: PlayerBaseLevel.ExpandedRegional);
             model.Rebuild(ops, clock.Now, plane.Registration);
@@ -139,7 +139,7 @@ namespace Airside.Tests
         public void Fleet_SelectionShowsResaleValueForABoughtAircraftButNotTheStarter()
         {
             var (clock, ops, plane) = HudTestAirline.Create();
-            ops.RestoreCareerState(50_000, 100, nameof(OperatingTier.Regional), null, 0, 0,
+            ops.RestoreCareerState(50_000 * FlightCostModel.LegacySaveMoneyScale, 100, nameof(OperatingTier.Regional), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 12, baseLevel: PlayerBaseLevel.ExpandedRegional);
             Assert.That(ops.BuyAircraft(AircraftType.Dash8Q400).Accepted, Is.True);
             var bought = ops.Fleet.Single(a => a.Type.Id == AircraftType.Dash8Q400.Id);

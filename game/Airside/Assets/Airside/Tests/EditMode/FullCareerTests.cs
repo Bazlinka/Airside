@@ -46,7 +46,7 @@ namespace Airside.Tests
         {
             var codes = new[] { "KGC", "PLO", "MGB", "CED", "MEL", "SYD", "CBR", "BNE", "PER",
                 "AKL", "SIN", "HKG" };
-            var career = new AirlineCareerState(500_000, 90, OperatingTier.International, completedPlayerRotations: 120,
+            var career = new AirlineCareerState(500_000 * FlightCostModel.LegacySaveMoneyScale, 90, OperatingTier.International, completedPlayerRotations: 120,
                 servedDestinations: codes, outstationBases: new[] { "MEL", "SYD" },
                 recentServiceMargins: Enumerable.Repeat(100L, 30));
             var fleet = Enumerable.Repeat(AircraftType.Boeing7378, 17).Append(AircraftType.AirbusA350900).ToArray();
@@ -54,7 +54,7 @@ namespace Airside.Tests
             var noWidebody = Enumerable.Repeat(AircraftType.Boeing7378, 18).ToArray();
             Assert.That(CareerRoadmap.FinaleReady(career, noWidebody, noWidebody.Length), Is.False,
                 "the finale needs every International-stage goal, the widebody included");
-            var loss = new AirlineCareerState(500_000, 90, OperatingTier.International,
+            var loss = new AirlineCareerState(500_000 * FlightCostModel.LegacySaveMoneyScale, 90, OperatingTier.International,
                 servedDestinations: codes, outstationBases: new[] { "MEL", "SYD" },
                 recentServiceMargins: Enumerable.Repeat(-100L, 30));
             Assert.That(CareerRoadmap.FinaleReady(loss, fleet, fleet.Length), Is.False);
@@ -75,7 +75,7 @@ namespace Airside.Tests
         public void OutstationFlight_UsesSeparateCapacitySettlesOnceAndSurvivesSave()
         {
             var (clock, operations) = NewAirline();
-            operations.RestoreCareerState(500_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            operations.RestoreCareerState(500_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 100,
                 baseLevel: PlayerBaseLevel.JetGate, manualRotations: 12);
             Assert.That(operations.OpenOutstationBase("MEL").Accepted, Is.True);
@@ -104,7 +104,7 @@ namespace Airside.Tests
         {
             var (_, operations) = NewAirline();
             var completed = operations.MarketOffers().Select(o => o.Id).ToArray();
-            operations.RestoreCareerState(200, 45, nameof(OperatingTier.Provisional), null, 0, 0,
+            operations.RestoreCareerState(200 * FlightCostModel.LegacySaveMoneyScale, 45, nameof(OperatingTier.Provisional), null, 0, 0,
                 Array.Empty<string>(), completed, 0);
             var offers = operations.MarketOffers();
             Assert.That(offers.Any(o => o.Id.StartsWith("REC-", StringComparison.Ordinal)), Is.True);
@@ -117,7 +117,7 @@ namespace Airside.Tests
         public void RecoveryContract_CanDispatchWithEmptyCashAndRepaysOnSettlement()
         {
             var (clock, operations) = NewAirline();
-            operations.RestoreCareerState(0, 45, nameof(OperatingTier.Provisional), null, 0, 0,
+            operations.RestoreCareerState(0 * FlightCostModel.LegacySaveMoneyScale, 45, nameof(OperatingTier.Provisional), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 0);
             var recovery = operations.MarketOffers().First(o => o.Id.StartsWith("REC-", StringComparison.Ordinal));
             Assert.That(operations.AcceptContract(recovery).Accepted, Is.True);
@@ -140,7 +140,7 @@ namespace Airside.Tests
                 AirlineOperations.AdelaideRegionalBays[1]);
             operations.AddAircraft(operations.PlayerAirline, "VH-T03", AircraftType.Atr42,
                 AirlineOperations.AdelaideRegionalBays[2]);
-            operations.RestoreCareerState(20_000, 85, nameof(OperatingTier.Regional), null, 0, 0,
+            operations.RestoreCareerState(20_000 * FlightCostModel.LegacySaveMoneyScale, 85, nameof(OperatingTier.Regional), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 30,
                 baseLevel: PlayerBaseLevel.Starter,
                 servedDestinations: new[] { "KGC", "PLO", "MGB", "CED" });
@@ -152,7 +152,7 @@ namespace Airside.Tests
         public void NetworkGrowth_ReachesTwentyFiveWithoutUsingAdelaideStands()
         {
             var (_, operations) = NewAirline();
-            operations.RestoreCareerState(5_000_000, 100, nameof(OperatingTier.International), null, 0, 0,
+            operations.RestoreCareerState(5_000_000 * FlightCostModel.LegacySaveMoneyScale, 100, nameof(OperatingTier.International), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 110,
                 baseLevel: PlayerBaseLevel.JetGate);
             foreach (var code in new[] { "MEL", "SYD", "BNE" })
@@ -172,7 +172,7 @@ namespace Airside.Tests
         public void InvalidOutstationSave_RejectsDuplicateRegistrationAndImpossibleFlight()
         {
             var (clock, operations) = NewAirline();
-            operations.RestoreCareerState(500_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            operations.RestoreCareerState(500_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 100,
                 baseLevel: PlayerBaseLevel.JetGate);
             Assert.That(operations.OpenOutstationBase("MEL").Accepted, Is.True);
@@ -203,7 +203,7 @@ namespace Airside.Tests
         public void RepeatSchedule_DoesNotGenerateFlightsDuringAwayCatchUp()
         {
             var (clock, operations) = NewAirline();
-            operations.RestoreCareerState(10_000, 95, nameof(OperatingTier.Regional), null, 0, 0,
+            operations.RestoreCareerState(10_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Regional), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 12, manualRotations: 12);
             Assert.That(operations.SetRepeatSchedule("VH-TST", "KGC", 12).Accepted, Is.True);
             var saved = AirlineSave.Capture(operations);

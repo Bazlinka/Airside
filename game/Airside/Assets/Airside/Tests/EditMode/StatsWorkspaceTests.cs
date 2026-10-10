@@ -121,7 +121,7 @@ namespace Airside.Tests
         public void Stats_BaseCapabilityNamesItsRealAdelaideStandAccess()
         {
             var (clock, ops, _) = HudTestAirline.Create();
-            ops.RestoreCareerState(50_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            ops.RestoreCareerState(50_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 System.Array.Empty<string>(), completedPlayerRotations: 28,
                 baseLevel: PlayerBaseLevel.JetGate);
             var model = new StatsWorkspaceModel();
@@ -141,7 +141,7 @@ namespace Airside.Tests
             Assert.That(model.HasNextTier, Is.True);
             Assert.That(model.NextTierTitle, Is.EqualTo("Regional starter base → Expanded regional base"));
             Assert.That(model.NextTierRequirementLine, Does.Contain("4 more flights"));
-            Assert.That(model.NextTierRequirementLine, Does.Contain("Costs $1,500"));
+            Assert.That(model.NextTierRequirementLine, Does.Contain("Costs $50,000"));
             Assert.That(model.NextTierProgress01, Is.EqualTo(0f));
             Assert.That(model.CanUpgradeBase, Is.False);
         }
@@ -150,7 +150,7 @@ namespace Airside.Tests
         public void Stats_BaseRoadmapOffersUpgradeWhenRequirementsAreMet()
         {
             var (clock, ops, _) = HudTestAirline.Create();
-            ops.RestoreCareerState(20_000, 100, nameof(OperatingTier.Provisional), null, 0, 0,
+            ops.RestoreCareerState(20_000 * FlightCostModel.LegacySaveMoneyScale, 100, nameof(OperatingTier.Provisional), null, 0, 0,
                 System.Array.Empty<string>(), completedPlayerRotations: 4,
                 baseLevel: PlayerBaseLevel.Starter);
             var model = new StatsWorkspaceModel();
@@ -196,7 +196,7 @@ namespace Airside.Tests
         public void Stats_NextTierReportsMaxTierReachedAtInternational()
         {
             var (clock, ops, _) = HudTestAirline.Create();
-            ops.RestoreCareerState(50_000, 95, nameof(OperatingTier.International), null, 0, 0,
+            ops.RestoreCareerState(50_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.International), null, 0, 0,
                 System.Array.Empty<string>(), completedPlayerRotations: 40,
                 baseLevel: PlayerBaseLevel.International);
             var model = new StatsWorkspaceModel();
@@ -294,7 +294,7 @@ namespace Airside.Tests
             foreach (var level in new[] { PlayerBaseLevel.Starter, PlayerBaseLevel.International })
             {
                 var (clock, ops, _) = HudTestAirline.Create();
-                ops.RestoreCareerState(1_234_567, 100, nameof(OperatingTier.International), null, 0, 0,
+                ops.RestoreCareerState(1_234_567 * FlightCostModel.LegacySaveMoneyScale, 100, nameof(OperatingTier.International), null, 0, 0,
                     Array.Empty<string>(), Array.Empty<string>(), 40, null, 12_345_678, null, baseLevel: level);
                 var model = new StatsWorkspaceModel();
                 model.Rebuild(ops, clock.Now);
@@ -330,7 +330,7 @@ namespace Airside.Tests
             var history = Enumerable.Range(0, StatsWorkspaceModel.MaxHistoryShown)
                 .Select(i => new CompletedContractRecord($"FULL-{i}", "ADL", "KGC", 100, new SimulationTime(i)))
                 .ToList();
-            ops.RestoreCareerState(50_000, 100, nameof(OperatingTier.International), null, 0, 0,
+            ops.RestoreCareerState(200_000 * FlightCostModel.LegacySaveMoneyScale, 100, nameof(OperatingTier.International), null, 0, 0,
                 Array.Empty<string>(), history.Select(h => h.DefinitionId).ToList(), 42, null, 12_345, history,
                 baseLevel: PlayerBaseLevel.International);
             Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True, "for the jet-operator milestone");
@@ -378,7 +378,7 @@ namespace Airside.Tests
             Assert.That(model.BaseCapabilityLine, Does.Contain("outsourced maintenance"));
             Assert.That(model.BaseCapabilityLine, Does.Contain("standard turnaround speed"));
 
-            ops.RestoreCareerState(50_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            ops.RestoreCareerState(50_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 System.Array.Empty<string>(), completedPlayerRotations: 28,
                 baseLevel: PlayerBaseLevel.JetGate);
             model.Rebuild(ops, clock.Now);

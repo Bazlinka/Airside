@@ -79,7 +79,7 @@ namespace Airside.Tests
         public void TheSelectedAircraftLeads_AndRowsAreCapped()
         {
             var (clock, ops, plane) = HudTestAirline.Create();
-            ops.RestoreCareerState(500_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            ops.RestoreCareerState(500_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 100, baseLevel: PlayerBaseLevel.ExpandedRegional);
             var more = new List<FleetAircraft> { plane };
             for (var i = 1; i < 5; i++)

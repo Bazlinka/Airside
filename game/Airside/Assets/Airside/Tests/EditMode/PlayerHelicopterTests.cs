@@ -14,7 +14,7 @@ namespace Airside.Tests
             clock = new ManualSimulationClock(new SimulationTime(8 * 3600));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource((uint)seed),
                 Airline.Player("Heli Air", "#1F7A8C"));
-            ops.RestoreCareerState(200_000, 100, nameof(OperatingTier.International), null, 0, 0,
+            ops.RestoreCareerState(200_000 * FlightCostModel.LegacySaveMoneyScale, 100, nameof(OperatingTier.International), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 40, baseLevel: PlayerBaseLevel.ExpandedRegional);
             return ops;
         }
@@ -31,7 +31,7 @@ namespace Airside.Tests
         {
             Assert.That(AircraftAcquisition.TryFor(AircraftType.Bell412, out var offer), Is.True);
             Assert.That(offer.RequiredTier, Is.EqualTo(OperatingTier.Provisional));
-            Assert.That(offer.Price, Is.GreaterThan(AircraftAcquisition.Atr42.Price));
+            Assert.That(offer.Price, Is.GreaterThan(AircraftAcquisition.Saab340.Price));
             Assert.That(offer.Operates, Is.EqualTo(RouteBand.Regional));
             var list = AircraftAcquisition.All.Select(o => o.Type.Id).ToList();
             Assert.That(list.IndexOf("B412"), Is.GreaterThan(list.IndexOf("ATR42")));
@@ -43,7 +43,7 @@ namespace Airside.Tests
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(3), Airline.Player("Heli Air", "#1F7A8C"));
-            ops.RestoreCareerState(200_000, 100, nameof(OperatingTier.International), null, 0, 0,
+            ops.RestoreCareerState(200_000 * FlightCostModel.LegacySaveMoneyScale, 100, nameof(OperatingTier.International), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 40, baseLevel: PlayerBaseLevel.Starter);
             var refused = ops.BuyAircraft(AircraftType.Bell412);
             Assert.That(refused.Accepted, Is.False);
@@ -202,15 +202,14 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Economics_TheHelicopterPaysLessPerFlightThanATurboprop_AndCostsSimilarToRun()
+        public void Economics_TheHelicopterPaysLessPerFlightThanATurboprop_ButStillTurnsAProfit()
         {
-            Assert.That(FlightEconomics.Weight(AircraftType.Bell412), Is.EqualTo(0.7).Within(1e-9));
             Assert.That(FlightEconomics.FlightPay(AircraftType.Bell412, 110.0),
-                Is.LessThan(FlightEconomics.FlightPay(AircraftType.Atr42, 110.0)));
+                Is.LessThan(FlightEconomics.FlightPay(AircraftType.Atr42, 110.0)),
+                "thirteen charter seats earn less per flight than a forty-eight-seat turboprop");
             Assert.That(FlightEconomics.FlightPay(AircraftType.Bell412, 110.0),
                 Is.GreaterThan(FlightEconomics.DispatchCost(AircraftType.Bell412, 110.0)),
                 "a short regional hop still turns a profit");
-            Assert.That(FlightEconomics.CostPerKm(AircraftType.Bell412), Is.EqualTo(FlightEconomics.TurbopropCostPerKm));
         }
 
         [Test]

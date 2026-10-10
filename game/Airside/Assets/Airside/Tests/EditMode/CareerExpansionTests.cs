@@ -274,7 +274,7 @@ namespace Airside.Tests
         public void BaseUpgrade_ControlsFleetCapacityAndChargesOnce()
         {
             var (_, ops, _) = PlayerOnly();
-            ops.RestoreCareerState(20_000, 90, nameof(OperatingTier.Provisional), null, 0, 0,
+            ops.RestoreCareerState(20_000 * FlightCostModel.LegacySaveMoneyScale, 90, nameof(OperatingTier.Provisional), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 6);
 
             var blocked = ops.BuyAircraft(AircraftType.Atr42);
@@ -293,7 +293,7 @@ namespace Airside.Tests
         public void BaseCapability_RefusesJetsUntilJetGateBaseExists()
         {
             var (_, ops, _) = PlayerOnly();
-            ops.RestoreCareerState(100_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            ops.RestoreCareerState(100_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 42, baseLevel: PlayerBaseLevel.ExpandedRegional);
 
             var blocked = ops.BuyAircraft(AircraftType.Boeing7378);
@@ -309,7 +309,7 @@ namespace Airside.Tests
         public void PlayerBase_DedicatedJetGatesAreUsedAndProtectedFromAiSelection()
         {
             var (_, ops, _) = PlayerOnly();
-            ops.RestoreCareerState(100_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            ops.RestoreCareerState(100_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 42, baseLevel: PlayerBaseLevel.JetGate);
 
             Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True);
@@ -326,7 +326,7 @@ namespace Airside.Tests
         public void PlayerCannotAssignAJetOutsideItsBaseGateAllocation()
         {
             var (_, ops, _) = PlayerOnly();
-            ops.RestoreCareerState(100_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            ops.RestoreCareerState(100_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 42, baseLevel: PlayerBaseLevel.JetGate);
             Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True);
             var jet = ops.FleetOf(ops.PlayerAirline).First(a => a.Type.Id == AircraftType.Boeing7378.Id);
@@ -341,7 +341,7 @@ namespace Airside.Tests
         public void LegacyPlayerJet_ReturnsToItsLeasedGateInsteadOfOldV1Gate()
         {
             var (_, ops, _) = PlayerOnly();
-            ops.RestoreCareerState(100_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            ops.RestoreCareerState(100_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 42, baseLevel: PlayerBaseLevel.JetGate);
             var jet = ops.AddAircraft(ops.PlayerAirline, "VH-OLD", AircraftType.Boeing7378,
                 new StableId("GATE-25"));
@@ -365,7 +365,7 @@ namespace Airside.Tests
             var outsourcedSeconds = starterPlane.CheckUntil.Value.ElapsedSeconds - starterClock.Now.ElapsedSeconds;
 
             var (localClock, localOps, localPlane) = PlayerOnly();
-            localOps.RestoreCareerState(20_000, 100, nameof(OperatingTier.Provisional), null, 0, 0,
+            localOps.RestoreCareerState(20_000 * FlightCostModel.LegacySaveMoneyScale, 100, nameof(OperatingTier.Provisional), null, 0, 0,
                 Array.Empty<string>(), completedPlayerRotations: 4,
                 baseLevel: PlayerBaseLevel.ExpandedRegional);
             var localBefore = localOps.CareerState.Funds;
@@ -413,10 +413,10 @@ namespace Airside.Tests
             var (_, ops, _) = PlayerOnly();
             Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.False, "starter has not met the gates");
 
-            ops.RestoreCareerState(20_000, 80, nameof(OperatingTier.Provisional), null, 0, 0, Array.Empty<string>(),
+            ops.RestoreCareerState(20_000 * FlightCostModel.LegacySaveMoneyScale, 80, nameof(OperatingTier.Provisional), null, 0, 0, Array.Empty<string>(),
                 Array.Empty<string>(), 6, baseLevel: PlayerBaseLevel.ExpandedRegional);
             Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.True);
-            Assert.That(ops.CareerState.Funds, Is.EqualTo(20_000 - AircraftAcquisition.Atr42.Price));
+            Assert.That(ops.CareerState.Funds, Is.EqualTo(20_000 * FlightCostModel.LegacySaveMoneyScale - AircraftAcquisition.Atr42.Price));
             var atr = ops.FleetOf(ops.PlayerAirline).First(a => a.Type.Id == AircraftType.Atr42.Id);
             Assert.That(atr.State, Is.EqualTo(FleetState.AtStand));
             Assert.That(ops.CanOperate(atr, Code("KGC")), Is.True);

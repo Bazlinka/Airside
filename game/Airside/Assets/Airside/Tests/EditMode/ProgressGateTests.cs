@@ -18,7 +18,7 @@ namespace Airside.Tests
 
         private static void Career(AirlineOperations ops, OperatingTier tier, int reliability, int flights,
             PlayerBaseLevel baseLevel, string[] outstations = null) =>
-            ops.RestoreCareerState(5_000_000, reliability, tier.ToString(), null, 0, 0, Array.Empty<string>(),
+            ops.RestoreCareerState(5_000_000 * FlightCostModel.LegacySaveMoneyScale, reliability, tier.ToString(), null, 0, 0, Array.Empty<string>(),
                 Array.Empty<string>(), flights, baseLevel: baseLevel, outstationBases: outstations);
 
         [Test]

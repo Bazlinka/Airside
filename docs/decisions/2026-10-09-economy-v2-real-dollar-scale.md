@@ -31,8 +31,33 @@ realistic overheads. Bailey left the choice to the team ("up to you"), and this 
 - **Bank loan:** 8.5% a year, capped by tier (A$2M, 15M, 80M, 300M), with the existing recovery contract as the safety net.
 - **Opening cash** A$1.5M, enough for an ATR 42 deposit (A$270k) but not a widebody deposit (A$3.8M).
 - Tuned (tier D) constants are named in `FlightCostModel`; the tests pin ordering and viability, not the exact numbers.
-- First code: `Simulation/FlightCostModel.cs` and `FlightCostModelTests`. It is **not yet wired** into `FlightEconomics`, planner, HUD or
-  saves; the live game still uses game-dollar formulas until the v24 migration lands.
+- Code: `Domain/LeaseTerms.cs` (market values, deposit), `Simulation/FlightCostModel.cs`, `EconomyPacingTests`.
+
+## Step 1 landed (9 Oct 2026): flight money, price list and save v24
+
+- `FlightEconomics.DispatchCost` and `FlightPay` now come from `FlightCostModel` (an out-and-back is two legs). `AircraftOffer.Price` is the
+  lease **deposit** (`LeaseTerms.Deposit`); "sell" still refunds `ResaleFraction` of it. Opening cash A$1.5M; Relaxed A$3.2M, Demanding A$1.1M.
+  Adelaide base upgrades A$50k / 200k / 700k; outstation bases A$500k / 1.4M.
+- **Maintenance is billed once.** The flight cost includes a maintenance reserve, and the game also bills explicit checks, which double-charged
+  at first (the real `CareerBot` ran out of cash at 119 hours). Dispatch now excludes the reserve (`LegResult.DispatchCost`) and a check pays the
+  reserve accrued over its interval (`FlightCostModel.CheckCost`).
+- Save `CurrentVersion` 24. `AirlineSave.ScaleLegacyMoney` multiplies funds, the accepted contract's pay, the day's totals and lifetime-revenue
+  tallies by `LegacySaveMoneyScale` (35) once, inside `Restore`. Known edge: a flight booked before the conversion and cancelled after it
+  refunds at the new cost. Tests: `EconomyMigrationTests`.
+- **Not yet done:** daily lease and insurance charges, the bank loan and its recovery path, HUD wording that says "deposit" and "lease", and a native
+  check that seven-digit amounts fit every HUD control. Until the daily charges land there is no running cost for holding an aircraft, as before.
+
+### Real `CareerBot` comparison (Standard difficulty, 150 open hours, seed 1; old economy = `main` before this change)
+
+| | Regional | Domestic | International | Fleet at 150 h | Cash at 150 h |
+|---|---:|---:|---:|---:|---:|
+| Old economy | 9.9 h | 30.4 h | 87.0 h | 6 | 29k |
+| Economy v2 step 1 | 10.9 h | 30.2 h | 74.3 h | 5 | 632k |
+
+A Casual player (seed 2, 100 h) reaches Regional at 11.2 h and Domestic at 33.0 h, lowest cash A$59k. Neither economy reaches the 18-aircraft
+finale with this bot (6/18 before, 5/18 after), so that gap predates this change. Pacing is therefore at parity with ADR 0120's targets, not
+better. The economy-only sim above was optimistic: it ignored dispatch cost timing, contracts, checks and demand, which is why the live bot
+reaches 5 aircraft where the sim reaches 20.
 
 ### Pacing check (economy-only simulation, 9 Oct 2026)
 

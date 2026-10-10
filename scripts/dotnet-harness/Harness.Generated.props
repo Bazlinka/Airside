@@ -316,6 +316,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FourEngineFleetTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FreightTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FreightTrafficTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FuelPriceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FullCareerTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FullMapAuditRegressionTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GameFeelHudTests.cs" />

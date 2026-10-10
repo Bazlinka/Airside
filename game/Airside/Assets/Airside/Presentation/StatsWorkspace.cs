@@ -115,6 +115,15 @@ namespace Airside.Presentation
         public float NextTierProgress01 { get; private set; }
         public bool CanUpgradeBase { get; private set; }
 
+        /// <summary>The bank buttons move this much at a time (A$).</summary>
+        public const long LoanStep = 250_000;
+
+        public bool CanBorrow { get; private set; }
+        public bool CanRepay { get; private set; }
+
+        /// <summary>Today's jet fuel price against its baseline, shown with the bank line.</summary>
+        public string FuelLine { get; private set; } = string.Empty;
+
         public IReadOnlyList<MilestoneRow> Milestones => _milestones;
         public IReadOnlyList<ContractHistoryRow> ContractHistory => _history;
         public string EmptyHistoryLine => "No contracts finished yet. Take one in Contracts.";
@@ -219,6 +228,9 @@ namespace Airside.Presentation
             NextTierRequirementLine = string.Empty;
             NextTierProgress01 = 0f;
             CanUpgradeBase = false;
+            CanBorrow = false;
+            CanRepay = false;
+            FuelLine = string.Empty;
             ContractsFulfilledLine = string.Empty;
             MilestonesReachedLine = string.Empty;
             AdelaideRankLine = string.Empty;
@@ -238,6 +250,10 @@ namespace Airside.Presentation
             CurrentLiveryHex = operations.PlayerAirline.LiveryHex;
             FundsLine = career.Loan > 0 ? $"${career.Funds:N0} on hand · ${career.Loan:N0} owed" : $"${career.Funds:N0} on hand";
             LifetimeRevenueLine = $"${career.LifetimeRevenue:N0} earned";
+            CanBorrow = career.LoanHeadroom > 0;
+            CanRepay = career.Loan > 0 && career.Funds > 0;
+            var fuel = (int)Math.Round((operations.FuelPriceRatio - 1.0) * 100.0);
+            FuelLine = $"Fuel {(fuel >= 0 ? "+" : "−")}{Math.Abs(fuel)}% vs normal · bank limit ${career.LoanCap:N0}";
             ReliabilityLine = $"{career.Reliability}% reliability";
             TierLine = $"{career.Tier} tier";
             FleetLine = $"{liveFleet} of {career.Base.FleetCapacity} aircraft"
@@ -649,6 +665,16 @@ namespace Airside.Presentation
             if (model.HasNextTier)
                 into.Button(layout.BaseUpgradeButton.Offset(0f, detailOffset - (layout.CompactOverview ? 12f : 0f)).WithHeight(layout.CompactOverview ? 24f : 30f), "EXPAND BASE", HudAction.UpgradeBase,
                     HudButtonStyle.Primary, model.CanUpgradeBase);
+            // Bank: beside the base button when the column is wide enough; the bank otherwise still covers shortfalls itself.
+            if (layout.LeftColumn.Width >= 460f)
+            {
+                var row = layout.BaseUpgradeButton.Offset(0f, detailOffset - (layout.CompactOverview ? 12f : 0f)).WithHeight(layout.CompactOverview ? 24f : 30f);
+                var x = layout.LeftColumn.X + 190f;
+                var width = Math.Min(125f, (layout.LeftColumn.Width - 190f - 8f) / 2f);
+                into.Button(new HudBox(x, row.Y, width, row.Height), "BORROW 250K", HudAction.BorrowStep, HudButtonStyle.Secondary, model.CanBorrow);
+                into.Button(new HudBox(x + width + 8f, row.Y, width, row.Height), "REPAY 250K", HudAction.RepayStep, HudButtonStyle.Secondary, model.CanRepay);
+                into.Text(new HudBox(x, row.Bottom + 2f, width * 2f + 8f, 16f), model.FuelLine, 10f, HudTone.Muted);
+            }
 
             PaintProfile(into, model, layout);
             PaintCompetition(into, model, layout);

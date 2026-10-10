@@ -21,11 +21,11 @@ namespace Airside.Simulation
         /// (two legs), so the planner can show one number. Built from <see cref="FlightCostModel"/>: fuel, crew, maintenance,
         /// airport and navigation charges, handling and overhead. The maintenance reserve is billed separately, by checks.
         /// </summary>
-        public static long DispatchCost(AircraftType type, double oneWayKm)
+        public static long DispatchCost(AircraftType type, double oneWayKm, double fuelPerKg = FlightCostModel.BaselineFuelPerKg)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             var km = Math.Max(0, oneWayKm);
-            return Math.Max(1L, (long)Math.Round(2.0 * FlightCostModel.Leg(type, km, FlightCostModel.BandForDistance(km)).DispatchCost));
+            return Math.Max(1L, (long)Math.Round(2.0 * FlightCostModel.Leg(type, km, FlightCostModel.BandForDistance(km), fuelPerKg).DispatchCost));
         }
 
         /// <summary>

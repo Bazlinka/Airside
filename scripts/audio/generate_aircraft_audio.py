@@ -231,8 +231,8 @@ def main():
             path.write_bytes(data)
     if failed:
         raise SystemExit('Stale aircraft audio: ' + ', '.join(failed))
-    print(f'{len(records)} aircraft AudioClips + 13 profiles: byte check passed' if args.check
-          else f'Generated {len(records)} aircraft AudioClips + 13 profiles; seam/level checks passed')
+    print(f'{len(records)} aircraft AudioClips + {len(PROFILES)} profiles: byte check passed' if args.check
+          else f'Generated {len(records)} aircraft AudioClips + {len(PROFILES)} profiles; seam/level checks passed')
 
 
 if __name__ == '__main__':

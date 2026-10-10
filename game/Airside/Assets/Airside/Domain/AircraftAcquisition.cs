@@ -88,12 +88,17 @@ namespace Airside.Domain
         public static readonly AircraftOffer Boeing7879 = new(
             AircraftType.Boeing7879, 74_000, OperatingTier.International, 91, 95);
 
+        public static readonly AircraftOffer Boeing7478 = new(
+            AircraftType.Boeing7478, 105_000, OperatingTier.International, 93, 120);
+        public static readonly AircraftOffer AirbusA380800 = new(
+            AircraftType.AirbusA380800, 125_000, OperatingTier.International, 94, 140);
+
         /// <summary>Every offer, in the order a career meets them (tier, then price).</summary>
         public static readonly IReadOnlyList<AircraftOffer> All = new[]
         {
             Saab340, Atr42, Bell412, Dash8Q400,
             EmbraerE190, AirbusA220300, Boeing737800, AirbusA320200, Boeing7378, AirbusA321Neo,
-            AirbusA330900, Boeing7879, Boeing78710, AirbusA350900
+            AirbusA330900, Boeing7879, Boeing78710, AirbusA350900, Boeing7478, AirbusA380800
         };
 
         public static bool TryFor(AircraftType type, out AircraftOffer offer)

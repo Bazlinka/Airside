@@ -141,6 +141,8 @@ namespace Airside.Simulation
                 "A339" => new Profile(5_500, 251, 2_600, 2_100, 140_000_000),
                 "B789" => new Profile(5_000, 254, 2_600, 2_000, 170_000_000),
                 "B78X" => new Profile(5_300, 254, 2_700, 2_100, 190_000_000),
+                "B748" => new Profile(10_500, 447.7, 4_000, 4_000, 180_000_000),
+                "A388" => new Profile(12_000, 575, 4_500, 5_000, 150_000_000),
                 "A359" => new Profile(5_600, 280, 2_700, 2_200, 200_000_000),
                 _ => throw new ArgumentException($"{type.Id} has no cost profile.", nameof(type))
             };

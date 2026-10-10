@@ -49,6 +49,8 @@ namespace Airside.Presentation
             new("A359", JetFlightDeck.AirbusA350, 7.92f, -4.45f, 1.66f),
             new("A339", JetFlightDeck.AirbusClassic, 7.92f, -3.55f, 1.62f),
             new("B789", JetFlightDeck.Boeing787, 7.70f, -4.30f, 1.63f),
+            new("B748", JetFlightDeck.Boeing787, 10.4f, -5.5f, 1.7f),
+            new("A388", JetFlightDeck.AirbusA350, 8.95f, -5.5f, 1.8f),
             new("B78X", JetFlightDeck.Boeing787, 7.70f, -4.65f, 1.63f),
         };
         public static bool TryFor(string id, out JetCockpitProfile profile)

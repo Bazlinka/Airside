@@ -312,6 +312,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightViewInformationTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightWorldLandCoverTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightWorldTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FourEngineFleetTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FreightTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FreightTrafficTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FullCareerTests.cs" />

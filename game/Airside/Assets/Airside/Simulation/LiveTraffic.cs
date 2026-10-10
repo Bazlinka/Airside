@@ -163,7 +163,6 @@ namespace Airside.Simulation
                 case "A338":
                 case "A359":
                 case "A35K":
-                case "A388":
                     return AircraftType.AirbusA350900;
                 case "A339":
                     return AircraftType.AirbusA330900;
@@ -173,9 +172,12 @@ namespace Airside.Simulation
                 case "B77W":
                 case "B788":
                 case "B78X":
+                    return AircraftType.Boeing78710;
+                case "A388":
+                    return AircraftType.AirbusA380800;
                 case "B744":
                 case "B748":
-                    return AircraftType.Boeing78710;
+                    return AircraftType.Boeing7478;
                 case "B789":
                     return AircraftType.Boeing7879;
                 default:

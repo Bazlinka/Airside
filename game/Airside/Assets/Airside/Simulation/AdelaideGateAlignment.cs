@@ -50,8 +50,10 @@ namespace Airside.Simulation
         /// </summary>
         public static readonly string[] CodeEGateIds = { "GATE-18", "GATE-20", "GATE-22L", "GATE-25", "GATE-26L", "GATE-28L" };
 
+        public static readonly string[] CodeFGateIds = { "GATE-16R", "GATE-18R", "GATE-20R", "GATE-22R" };
+
         public static float SetbackFor(string gateId) =>
-            Array.IndexOf(CodeEGateIds, gateId) >= 0 ? CodeESetbackMetres : CodeCSetbackMetres;
+            Array.IndexOf(CodeEGateIds, gateId) >= 0 || Array.IndexOf(CodeFGateIds, gateId) >= 0 ? CodeESetbackMetres : CodeCSetbackMetres;
 
         /// <summary>
         /// The T1 airside wall as an x → z line, read from the terminal footprint itself (its

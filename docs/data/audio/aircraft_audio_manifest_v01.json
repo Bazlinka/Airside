@@ -351,6 +351,60 @@
     "looping": true
   },
   {
+    "file": "eng_b748_idle_v01.wav",
+    "sha256": "456d82cd55732996ca0c91a5072460234e2b98fb898e07acdadbb886fe599586",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.39208,
+    "seam": 0.011688,
+    "looping": true
+  },
+  {
+    "file": "eng_b748_power_v01.wav",
+    "sha256": "7e55d25441687fc8f4cf94fd1d5fca859bc12203857ddb29affe919f5506cd9c",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.39241,
+    "seam": 0.077057,
+    "looping": true
+  },
+  {
+    "file": "eng_b748_reverse_v01.wav",
+    "sha256": "c3fbfea2a38f351678088364e6cf5bd9ed913403a817f7df6c44f4dbb8089354",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.47155,
+    "seam": 0.117706,
+    "looping": true
+  },
+  {
+    "file": "eng_a388_idle_v01.wav",
+    "sha256": "2f3d6ee14ff09661b4cc14cd29e881a44f2012a2aae75d32ea334044244eae78",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.41313,
+    "seam": 0.011871,
+    "looping": true
+  },
+  {
+    "file": "eng_a388_power_v01.wav",
+    "sha256": "8ba88f4717e98c7dbc3124187dbc6f551e523956e0a3549d19437817088c2d84",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.40796,
+    "seam": 0.076294,
+    "looping": true
+  },
+  {
+    "file": "eng_a388_reverse_v01.wav",
+    "sha256": "ff46a1057868c8a3360c3bda7e8a86a576dcc806d0f17a9ac30c76736462870d",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.46924,
+    "seam": 0.007507,
+    "looping": true
+  },
+  {
     "file": "aircraft_tyre_roll_v01.wav",
     "sha256": "78b32a91becd8004165f549de7f6b790d02ef050c81555315edf09339af93d27",
     "seconds": 8.0,

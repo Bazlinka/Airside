@@ -53,6 +53,8 @@ namespace Airside.Simulation
             if (type.Id == AircraftType.AirbusA320200.Id) return 1.10;
             if (type.Id == AircraftType.AirbusA330900.Id) return 1.02;
             if (type.Id == AircraftType.Boeing7879.Id) return 0.98;
+            if (type.Id == AircraftType.Boeing7478.Id) return 1.35;
+            if (type.Id == AircraftType.AirbusA380800.Id) return 1.40;
             return 1.0;
         }
 
@@ -155,7 +157,7 @@ namespace Airside.Simulation
             // 170-seat 737 on the same route (revenue only reflects load factor). Classes, not exact seats, so
             // sister types (737-8 / 737-800) still pay the same.
             var seats = AircraftCatalogue.TypicalSeats(type);
-            return seats <= 120 ? 1.6 : seats <= 220 ? 2.2 : seats <= 300 ? 3.0 : 3.4;
+            return seats > 400 ? 4.2 : seats <= 120 ? 1.6 : seats <= 220 ? 2.2 : seats <= 300 ? 3.0 : 3.4;
         }
     }
 }

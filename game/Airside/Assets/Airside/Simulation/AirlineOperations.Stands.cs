@@ -54,6 +54,9 @@ namespace Airside.Simulation
         /// <summary>Largest ICAO code letter this stand can take (regional bays and most gates: C).</summary>
         public static char StandCodeLetter(StableId stand)
         {
+            foreach (var gate in CodeFGates)
+                if (gate.Equals(stand))
+                    return 'F';
             foreach (var gate in CodeEGates)
                 if (gate.Equals(stand))
                     return 'E';
@@ -124,6 +127,24 @@ namespace Airside.Simulation
             return false;
         }
 
+        // Code F envelopes must never use crowding's cosmetic fallback. Reserve room
+        // beside a large jet in either direction, including taxi-in and pushback holders.
+        private bool LargeJetStandClearance(AircraftType type, StableId stand, FleetAircraft except = null)
+        {
+            var here = AdelaideGround.StandPose(stand);
+            foreach (var other in _fleet)
+            {
+                if (ReferenceEquals(other, except)) continue;
+                var held = HoldsStand(other) ? other.Stand
+                    : other.State == FleetState.TaxiOut ? other.DepartureStand : default;
+                if (string.IsNullOrEmpty(held.Value) || held.Equals(stand)) continue;
+                if (AircraftCatalogue.CodeLetter(type) != 'F' && AircraftCatalogue.CodeLetter(other.Type) != 'F') continue;
+                if (GroundTraffic.TooClose(here, GroundTraffic.HalfSpan(type),
+                    AdelaideGround.StandPose(held), GroundTraffic.HalfSpan(other.Type))) return false;
+            }
+            return true;
+        }
+
         public bool IsStandFree(StableId stand) => IsStandFree(stand, null);
 
         private bool IsStandFree(StableId stand, FleetAircraft except)
@@ -169,7 +190,7 @@ namespace Airside.Simulation
         public IEnumerable<StableId> FreeStandsFor(AircraftType type)
         {
             foreach (var stand in _stands)
-                if (StandFits(type, stand) && IsStandFree(stand))
+                if (StandFits(type, stand) && IsStandFree(stand) && LargeJetStandClearance(type, stand))
                     yield return stand;
         }
 
@@ -186,7 +207,7 @@ namespace Airside.Simulation
 
             foreach (var stand in _stands)
             {
-                if (!StandFits(aircraft.Type, stand) || !IsStandFree(stand, aircraft)) continue;
+                if (!StandFits(aircraft.Type, stand) || !IsStandFree(stand, aircraft) || !LargeJetStandClearance(aircraft.Type, stand, aircraft)) continue;
                 if (aircraft.Airline.IsPlayer && CareerState != null
                     && !PlayerBase.CanUseStand(CareerState.BaseLevel, aircraft.Type, stand))
                     continue;
@@ -268,6 +289,8 @@ namespace Airside.Simulation
                 && !PlayerBase.CanUseStand(CareerState.BaseLevel, aircraft.Type, stand))
                 return CommandResult.Refused(
                     $"{AdelaideGround.StandLabel(stand)} isn't part of your {CareerState.Base.Title}.");
+            if (!LargeJetStandClearance(aircraft.Type, stand, aircraft))
+                return CommandResult.Refused("A large jet needs the neighbouring stand clearance.");
             if (!IsStandFree(stand, aircraft))
                 return CommandResult.Refused($"{AdelaideGround.StandLabel(stand)} is taken.");
             if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, aircraft))
@@ -341,7 +364,8 @@ namespace Airside.Simulation
             if (!string.IsNullOrEmpty(aircraft.Stand.Value)
                 && _stands.Contains(aircraft.Stand)
                 && StandFits(aircraft.Type, aircraft.Stand)
-                && IsStandFree(aircraft.Stand, aircraft))
+                && IsStandFree(aircraft.Stand, aircraft)
+                && LargeJetStandClearance(aircraft.Type, aircraft.Stand, aircraft))
                 return aircraft.Stand;
 
             // Scheduled terminal operators return to their own gate when it is available.
@@ -352,6 +376,7 @@ namespace Airside.Simulation
                 && _stands.Contains(aircraft.DepartureStand)
                 && StandFits(aircraft.Type, aircraft.DepartureStand)
                 && IsStandFree(aircraft.DepartureStand)
+                && LargeJetStandClearance(aircraft.Type, aircraft.DepartureStand, aircraft)
                 && IsLeadInFree(aircraft.DepartureStand, aircraft)
                 && (!aircraft.Airline.IsPlayer || CareerState == null
                     || PlayerBase.CanUseStand(CareerState.BaseLevel, aircraft.Type, aircraft.DepartureStand))
@@ -390,7 +415,7 @@ namespace Airside.Simulation
             // International) instead of silently using any terminal gate.
             foreach (var stand in PlayerBase.DedicatedStands(CareerState.BaseLevel, type))
             {
-                if (!_stands.Contains(stand) || !StandFits(type, stand) || !IsStandFree(stand))
+                if (!_stands.Contains(stand) || !StandFits(type, stand) || !IsStandFree(stand) || !LargeJetStandClearance(type, stand, except))
                     continue;
                 if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, except))
                     continue;
@@ -424,7 +449,7 @@ namespace Airside.Simulation
             var bestSeconds = long.MaxValue;
             foreach (var stand in _stands)
             {
-                if (!StandFits(type, stand) || !IsStandFree(stand))
+                if (!StandFits(type, stand) || !IsStandFree(stand) || !LargeJetStandClearance(type, stand, except))
                     continue;
                 if (!allowPlayerDedicated && PlayerAirline != null && CareerState != null
                     && PlayerBase.IsDedicatedStand(CareerState.BaseLevel, stand))

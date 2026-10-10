@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-10 — #778: add passenger 747-8/A380-800 fleet models, flight/audio profiles, code F stands and A380 Super wake; preserve saves.
+
 - 2026-10-09 — Economy v2: pure real-dollar FlightCostModel (sourced Adelaide/Airservices fees, leases, loan caps) with 12 tests and a 150-hour pacing simulation; not yet wired into the live game.
 - 2026-10-09 — ADR: Economy v2 decision (real-dollar scale, real fees, v23->v24 save migration plan, x1000 funds); data file gains fares/values findings. Docs only.
 - 2026-10-09 — Docs: sourced real-world airline cost data (Adelaide fees, Airservices charges, fuel, crew) with confidence tiers for Economy v2; no code.

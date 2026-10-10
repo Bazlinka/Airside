@@ -209,6 +209,22 @@ namespace Airside.Domain
             StandClass.TerminalGate, ModelStatus.Genuine,
             "Models/Aircraft/mdl_787_9_v01.gltf", "UI/Aircraft/thb_air_b789_v01.png", "SPEC-BOEING-787-9", AircraftWeightBand.Heavy);
 
+        public static readonly AircraftSpec Boeing7478 = new(
+            "B748", "Boeing 747-8 Intercontinental", "Long-haul four-engine widebody · 410–467 seats",
+            76.25, 68.40, 19.40,
+            planningCruiseKmh: 903, practicalRangeKm: 13500,
+            manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 14320, manufacturerRangeBasis: "7,730 nmi passenger planning reference",
+            StandClass.TerminalGate, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_747_8_v01.gltf", "UI/Aircraft/thb_air_b748_v01.png", "SPEC-BOEING-747-8", AircraftWeightBand.Heavy);
+
+        public static readonly AircraftSpec AirbusA380800 = new(
+            "A388", "Airbus A380-800", "Long-haul double-deck widebody · 500–575 seats",
+            72.73, 79.75, 24.09,
+            planningCruiseKmh: 903, practicalRangeKm: 14000,
+            manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 15000, manufacturerRangeBasis: "8,000 nmi Airbus reference, payload dependent",
+            StandClass.TerminalGate, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_a380_800_v01.gltf", "UI/Aircraft/thb_air_a388_v01.png", "SPEC-AIRBUS-A380-800", AircraftWeightBand.Super);
+
         // Bell 412EP (AIR-017): the SA Ambulance rescue helicopter at Helipad West (ADR 0186, 0207). Bell's
         // published envelope is 17.1 m long with rotors turning, 14.0 m rotor, 4.6 m high, 226 km/h maximum
         // cruise and 358 nm range; planning cruise sits below that and the practical range allows reserves.
@@ -231,7 +247,7 @@ namespace Airside.Domain
         {
             Atr42, Saab340, Dash8Q400, EmbraerE190, AirbusA220300,
             AirbusA320200, Boeing737800, Boeing7378, AirbusA321Neo,
-            AirbusA330900, AirbusA350900, Boeing7879, Boeing78710
+            AirbusA330900, AirbusA350900, Boeing7879, Boeing78710, Boeing7478, AirbusA380800
         };
 
         public static bool TryFor(AircraftType type, out AircraftSpec found)

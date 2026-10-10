@@ -150,6 +150,13 @@ namespace Airside.Presentation
             "Models/Aircraft/mdl_787_9_v01.gltf", -0.68f, new Vector3(0f, 0f, -31.405f),
             new Vector3(64f, 20f, 68f), 8.5f, 59f, 63f, 65f, 2.3f, 0.70f, 0.55f);
 
+        public static readonly AircraftVisualProfile Boeing7478 = new(
+            "Models/Aircraft/mdl_747_8_v01.gltf", -0.68f, new Vector3(0f, 0f, -38.125f),
+            new Vector3(72f, 23f, 80f), 9.7f, 68f, 76f, 76f, 2.8f, .65f, .55f);
+        public static readonly AircraftVisualProfile AirbusA380800 = new(
+            "Models/Aircraft/mdl_a380_800_v01.gltf", -0.68f, new Vector3(0f, 0f, -36.365f),
+            new Vector3(84f, 27f, 77f), 12f, 79f, 73f, 82f, 3f, .70f, .55f);
+
         // AIR-007: original Saab 340B-class model. Low-wing regional turboprop with a
         // conventional tail; centred airframe root and tyres at local y=0, like the other
         // regional types, but framed to the compact 19.73 × 21.44 m envelope.
@@ -222,6 +229,8 @@ namespace Airside.Presentation
                 return AirbusA330900;
             if (type != null && type.Id == AircraftType.Boeing7879.Id)
                 return Boeing7879;
+            if (type != null && type.Id == AircraftType.Boeing7478.Id) return Boeing7478;
+            if (type != null && type.Id == AircraftType.AirbusA380800.Id) return AirbusA380800;
             if (type != null && type.Id == AircraftType.Dash8Q400.Id)
                 return Dash8Q400;
             if (type != null && type.Id == AircraftType.Saab340.Id)

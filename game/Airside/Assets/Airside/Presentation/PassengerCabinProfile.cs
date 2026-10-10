@@ -75,6 +75,8 @@ namespace Airside.Presentation
             new("A359", 2.836f, 7.133f, -25.772001f, 0.79f, new[] { 3,3,3 }, .508f, .250f, .345f, 20f),
             new("A339", 2.683f, 7.025f, -25.044684f, 0.79f, new[] { 2,4,2 }, .484120f, .238249f, .340f, 20f),
             new("B789", 2.745f, 7.121f, -24.232627f, 0.79f, new[] { 3,3,3 }, .477656f, .235067f, .345f, 20f, revealDepth: .12f, windowSquareness: 2.6f, ceilingY: 1.15f, aisleWidth: .46f, electronicDimming: true),
+            new("B748", 3.035f, 6.55f, -26.2f, .79f, new[] { 3,4,3 }, .6f, .26f, .36f, 20f),
+            new("A388", 3.555f, 6.9f, -26.2f, .79f, new[] { 3,4,3 }, .6f, .26f, .36f, 20f),
             new("B78X", 2.745f, 7.121f, -26.350715f, 0.79f, new[] { 3,3,3 }, .519407f, .255613f, .345f, 24f, revealDepth: .12f, windowSquareness: 2.6f, ceilingY: 1.15f, aisleWidth: .46f, electronicDimming: true),
         };
         public static bool TryFor(string id, out PassengerCabinProfile profile)

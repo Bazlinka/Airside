@@ -54,6 +54,10 @@ namespace Airside.Simulation
                 return new AircraftDoor(-2.64f, -5.92f, 4.65f, 6.55f);
             if (Is(type, AircraftType.Boeing78710))
                 return new AircraftDoor(-2.64f, -6.44f, 4.65f, 6.55f);
+            if (Is(type, AircraftType.Boeing7478))
+                return new AircraftDoor(-2.33f, -8.00f, 3.73f, 5.49f);
+            if (Is(type, AircraftType.AirbusA380800))
+                return new AircraftDoor(-3.33f, -8.00f, 4.00f, 5.91f);
             // </generated door layout>
             return L1(AircraftType.Boeing7378);
         }
@@ -115,7 +119,7 @@ namespace Airside.Simulation
             AircraftType.EmbraerE190, AircraftType.AirbusA220300, AircraftType.AirbusA320200,
             AircraftType.Boeing737800, AircraftType.Boeing7378, AircraftType.AirbusA321Neo,
             AircraftType.AirbusA350900, AircraftType.AirbusA330900, AircraftType.Boeing7879,
-            AircraftType.Boeing78710
+            AircraftType.Boeing78710, AircraftType.Boeing7478, AircraftType.AirbusA380800
         };
 
         private static readonly Dictionary<string, AerobridgeSite> SitesByGate = Build();
@@ -176,6 +180,8 @@ namespace Airside.Simulation
                 var reaches = true;
                 foreach (var type in GateTypes)
                 {
+                    if (AircraftCatalogue.CodeLetter(type) == 'F'
+                        && Array.IndexOf(AdelaideGateAlignment.CodeFGateIds, gate.Id) < 0) continue;
                     var length = DockedLength(site, gate, type);
                     if (length < MinTunnelMetres || length > MaxTunnelMetres)
                         reaches = false;

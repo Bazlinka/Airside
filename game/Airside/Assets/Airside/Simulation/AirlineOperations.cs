@@ -249,6 +249,12 @@ namespace Airside.Simulation
         /// International widebody lease already park. Every other gate is code C
         /// (737 / A320 family and smaller). ADR 0110.
         /// </summary>
+        public static readonly IReadOnlyList<StableId> CodeFGates = new[]
+        {
+            new StableId("GATE-16R"), new StableId("GATE-18R"),
+            new StableId("GATE-20R"), new StableId("GATE-22R")
+        };
+
         public static readonly IReadOnlyList<StableId> CodeEGates = new[]
         {
             new StableId("GATE-18"), new StableId("GATE-20"), new StableId("GATE-22L"),

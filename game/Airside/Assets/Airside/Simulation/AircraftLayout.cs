@@ -104,6 +104,7 @@ namespace Airside.Simulation
         public float TailplaneFrontZ { get; }
         public float TailplaneUndersideY { get; }
         public EngineLayout Engine { get; }
+        public EngineLayout? OuterEngine { get; private set; }
 
         /// <summary>The door passengers use when boarding by stairs (L1 on a jet).</summary>
         public (float X, float Z) PassengerDoor { get; }
@@ -142,6 +143,11 @@ namespace Airside.Simulation
                     into.Add(new LayoutRect(x - e.PropellerRadius, x + e.PropellerRadius,
                         e.PropellerZ - 0.3f, e.PropellerZ + 0.3f));
             }
+
+            if (OuterEngine is { } outer)
+                foreach (var side in Sides)
+                    into.Add(new LayoutRect(side * outer.X - outer.HalfWidth,
+                        side * outer.X + outer.HalfWidth, outer.ZBack, outer.ZFront));
 
             var headroom = forVehicles ? VehicleHeadroomMetres : PersonHeadroomMetres;
             if (WingUndersideY < headroom)
@@ -298,6 +304,13 @@ namespace Airside.Simulation
                 (2.70f, -15.0f), (2.55f, -56.80f));
             Jet(AircraftType.Boeing7879, -62.81f, 2.88f, 30.06f, new EngineLayout(9.98f, -33.59f, -23.71f, 1.78f),
                 (2.80f, -15.0f), (2.60f, -56.04f));
+
+            Jet(AircraftType.Boeing7478, -76.25f, 3.05f, 34.2f,
+                new EngineLayout(12f, -38f, -30f, 1.45f), (2.9f, -20f), (2.9f, -64f));
+            ById["B748"].OuterEngine = new EngineLayout(22f, -44f, -36f, 1.45f);
+            Jet(AircraftType.AirbusA380800, -72.73f, 3.57f, 39.875f,
+                new EngineLayout(13f, -36f, -28f, 1.65f), (3.4f, -19f), (3.4f, -61f));
+            ById["A388"].OuterEngine = new EngineLayout(25f, -42f, -34f, 1.65f);
 
             void Jet(AircraftType type, float tailZ, float halfWidth, float halfSpan, EngineLayout engine,
                 (float, float) cargo, (float, float) catering)

@@ -5,28 +5,30 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
-**Four-engine fleet (#778, Codex, 10 Oct):** B748 passenger 747-8 (Bailey's choice) and
-A388 A380-800 catalogue/purchase/performance/visual/audio support. Code F stands,
-International lease at 18R with clear shared F overflow, four-engine footprints; A380 Super wake rules.
-Original distinct 3D kits, skins/glazing, independent main trucks and packaged mirrors.
-Existing save schema, ambient Adelaide schedule and prior fleet assets preserved.
-112 initial headless / 86 native and 63 final regressions pass; both final native journeys pass; wordmark checks pass; final rendered fit review pending.
-Evidence/limits:
-`docs/testing/four-engine-fleet-2026-10-10.md`. Representative shared cockpit families
-and main-deck cabin; exact instruments and upper-deck traversal not implemented.
-Prior ground-team/gear/sky evidence and limits retained verbatim in
+**Four-engine fleet (#778 / PR #781, Codex, 11 Oct):** passenger B748 747-8
+(Bailey's selected variant) and A388 A380-800 now have purchase/lease, flight,
+visual/audio and service profiles with distinct original 3D kits. Code F
+18R lease/shared overflow and persisted departure-line return reservations;
+A380 Super wake. Existing aircraft/timetable and save compatibility preserved.
+Economy v2 shared lease/cost inputs retained (A$4.86M / A$4.05M deposits).
+
+Both selected native round trips and nine feature/disk-save steps per aircraft
+pass on clean universal 46ff53f1. Final wordmark-only 80c5d09c universal build
+and native builder frames inspected. 63 final pure, 11 native reservation and
+10 title checks pass; earlier geometry/native evidence and actual CI limits are
+recorded in `docs/testing/four-engine-fleet-2026-10-10.md`.
+Shared representative cockpit families/main-deck views; exact instruments,
+upper-deck traversal, exhaustive listening and performance remain unverified.
+Prior economy/ground-team/gear/sky state and limits retained verbatim in
 `docs/history/game-handoff-before-four-engine-fleet-2026-10-10.md`.
 
-**Economy v2:** newly merged real-dollar flight costs, leases and save v24 retained;
-new types use shared lease terms (A$4.86M / A$4.05M deposits). Standing-cost/loan work
-remains with its owning task. Prior economy and ground-team handoff is archived below.
-
-**Next:** first clean universal build and 84 integrated headless checks pass. Complete
-selected-aircraft journeys and return-stand/service-clearance retest (private fixture uses save restore), then merge
-this scoped task. Preserve personal saves, running apps and other tools' economy work.
+**Next:** this authorised fleet implementation and QA are complete; choose the
+next approved work. Standing-cost/loan work remains with its owning task.
+Bailey can personally playtest the isolated stamped 80c5d09c build. Preserve
+personal saves, active apps and other tools' generated/source edits.
 Standing policy: focused checks chosen automatically; broad suites/soaks on request.
 
-*One block, replaced at the end of each session. Updated 2026-10-10.*
+*One block, replaced at the end of each session. Updated 2026-10-11.*
 
 ## Current milestone
 

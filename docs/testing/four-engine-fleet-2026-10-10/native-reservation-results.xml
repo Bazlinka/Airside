@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="11" result="Passed" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-10 07:53:17Z" end-time="2026-10-10 07:53:18Z" duration="0.2095525">
+  <test-suite type="TestSuite" id="1000" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="2749" result="Passed" start-time="2026-10-10 07:53:17Z" end-time="2026-10-10 07:53:18Z" duration="0.209553" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="4196" name="Airside.Tests.EditMode.dll" fullname="/Users/baileyfleming/.codex/worktrees/747-a380/Airside/game/Airside/Library/ScriptAssemblies/Airside.Tests.EditMode.dll" runstate="Runnable" testcasecount="2748" result="Passed" start-time="2026-10-10 07:53:17Z" end-time="2026-10-10 07:53:18Z" duration="0.193095" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="45961" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="4197" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="2748" result="Passed" start-time="2026-10-10 07:53:17Z" end-time="2026-10-10 07:53:18Z" duration="0.181201" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="4198" name="Tests" fullname="Airside.Tests" runstate="Runnable" testcasecount="2748" result="Passed" start-time="2026-10-10 07:53:17Z" end-time="2026-10-10 07:53:18Z" duration="0.169581" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="2876" name="FourEngineFleetTests" fullname="Airside.Tests.FourEngineFleetTests" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-10-10 07:53:17Z" end-time="2026-10-10 07:53:18Z" duration="0.132353" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="2891" name="A380LeavesSuperWakeBehindIt" fullname="Airside.Tests.FourEngineFleetTests.A380LeavesSuperWakeBehindIt" methodname="A380LeavesSuperWakeBehindIt" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" seed="1801321673" result="Passed" start-time="2026-10-10 07:53:17Z" end-time="2026-10-10 07:53:17Z" duration="0.008902" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="2885" name="InternationalCareerCanBuyAndRestoreLargeJet" fullname="Airside.Tests.FourEngineFleetTests.InternationalCareerCanBuyAndRestoreLargeJet" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-10 07:53:17Z" end-time="2026-10-10 07:53:17Z" duration="0.052207" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2883" name="InternationalCareerCanBuyAndRestoreLargeJet(&quot;B748&quot;)" fullname="Airside.Tests.FourEngineFleetTests.InternationalCareerCanBuyAndRestoreLargeJet(&quot;B748&quot;)" methodname="InternationalCareerCanBuyAndRestoreLargeJet" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" seed="521392606" result="Passed" start-time="2026-10-10 07:53:17Z" end-time="2026-10-10 07:53:17Z" duration="0.050314" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2884" name="InternationalCareerCanBuyAndRestoreLargeJet(&quot;A388&quot;)" fullname="Airside.Tests.FourEngineFleetTests.InternationalCareerCanBuyAndRestoreLargeJet(&quot;A388&quot;)" methodname="InternationalCareerCanBuyAndRestoreLargeJet" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" seed="1453539352" result="Passed" start-time="2026-10-10 07:53:17Z" end-time="2026-10-10 07:53:17Z" duration="0.000540" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="2887" name="InternationalLargeJetUsesCompatibleSharedOverflowWhenItsPierIsHeld" fullname="Airside.Tests.FourEngineFleetTests.InternationalLargeJetUsesCompatibleSharedOverflowWhenItsPierIsHeld" methodname="InternationalLargeJetUsesCompatibleSharedOverflowWhenItsPierIsHeld" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" seed="1902743736" result="Passed" start-time="2026-10-10 07:53:17Z" end-time="2026-10-10 07:53:18Z" duration="0.022388" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="2879" name="LargeJetsUseTheirOwnProfilesAndCodeFStands" fullname="Airside.Tests.FourEngineFleetTests.LargeJetsUseTheirOwnProfilesAndCodeFStands" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-10 07:53:18Z" end-time="2026-10-10 07:53:18Z" duration="0.031792" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2877" name="LargeJetsUseTheirOwnProfilesAndCodeFStands(&quot;B748&quot;,Heavy)" fullname="Airside.Tests.FourEngineFleetTests.LargeJetsUseTheirOwnProfilesAndCodeFStands(&quot;B748&quot;,Heavy)" methodname="LargeJetsUseTheirOwnProfilesAndCodeFStands" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" seed="1350700057" result="Passed" start-time="2026-10-10 07:53:18Z" end-time="2026-10-10 07:53:18Z" duration="0.027626" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2878" name="LargeJetsUseTheirOwnProfilesAndCodeFStands(&quot;A388&quot;,Super)" fullname="Airside.Tests.FourEngineFleetTests.LargeJetsUseTheirOwnProfilesAndCodeFStands(&quot;A388&quot;,Super)" methodname="LargeJetsUseTheirOwnProfilesAndCodeFStands" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" seed="1644314335" result="Passed" start-time="2026-10-10 07:53:18Z" end-time="2026-10-10 07:53:18Z" duration="0.003305" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="2886" name="LargeStandClearanceBlocksNeighbourInBothDirections" fullname="Airside.Tests.FourEngineFleetTests.LargeStandClearanceBlocksNeighbourInBothDirections" methodname="LargeStandClearanceBlocksNeighbourInBothDirections" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" seed="25860030" result="Passed" start-time="2026-10-10 07:53:18Z" end-time="2026-10-10 07:53:18Z" duration="0.001238" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="2890" name="ReturnStandReservationSurvivesSaveAndNeverBlocksItsOwner" fullname="Airside.Tests.FourEngineFleetTests.ReturnStandReservationSurvivesSaveAndNeverBlocksItsOwner" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-10 07:53:18Z" end-time="2026-10-10 07:53:18Z" duration="0.002897" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2888" name="ReturnStandReservationSurvivesSaveAndNeverBlocksItsOwner(&quot;B748&quot;)" fullname="Airside.Tests.FourEngineFleetTests.ReturnStandReservationSurvivesSaveAndNeverBlocksItsOwner(&quot;B748&quot;)" methodname="ReturnStandReservationSurvivesSaveAndNeverBlocksItsOwner" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" seed="957617444" result="Passed" start-time="2026-10-10 07:53:18Z" end-time="2026-10-10 07:53:18Z" duration="0.002052" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2889" name="ReturnStandReservationSurvivesSaveAndNeverBlocksItsOwner(&quot;A388&quot;)" fullname="Airside.Tests.FourEngineFleetTests.ReturnStandReservationSurvivesSaveAndNeverBlocksItsOwner(&quot;A388&quot;)" methodname="ReturnStandReservationSurvivesSaveAndNeverBlocksItsOwner" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" seed="1856568407" result="Passed" start-time="2026-10-10 07:53:18Z" end-time="2026-10-10 07:53:18Z" duration="0.000378" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="ParameterizedMethod" id="2882" name="SaveRetainsNewIdentityAndServiceRoutingAvoidsOuterEngines" fullname="Airside.Tests.FourEngineFleetTests.SaveRetainsNewIdentityAndServiceRoutingAvoidsOuterEngines" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-10 07:53:18Z" end-time="2026-10-10 07:53:18Z" duration="0.004896" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2880" name="SaveRetainsNewIdentityAndServiceRoutingAvoidsOuterEngines(&quot;B748&quot;)" fullname="Airside.Tests.FourEngineFleetTests.SaveRetainsNewIdentityAndServiceRoutingAvoidsOuterEngines(&quot;B748&quot;)" methodname="SaveRetainsNewIdentityAndServiceRoutingAvoidsOuterEngines" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" seed="1042612447" result="Passed" start-time="2026-10-10 07:53:18Z" end-time="2026-10-10 07:53:18Z" duration="0.004174" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2881" name="SaveRetainsNewIdentityAndServiceRoutingAvoidsOuterEngines(&quot;A388&quot;)" fullname="Airside.Tests.FourEngineFleetTests.SaveRetainsNewIdentityAndServiceRoutingAvoidsOuterEngines(&quot;A388&quot;)" methodname="SaveRetainsNewIdentityAndServiceRoutingAvoidsOuterEngines" classname="Airside.Tests.FourEngineFleetTests" runstate="Runnable" seed="2044875586" result="Passed" start-time="2026-10-10 07:53:18Z" end-time="2026-10-10 07:53:18Z" duration="0.000213" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: /Users/baileyfleming/Library/Application Support/DefaultCompany/Airside/TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

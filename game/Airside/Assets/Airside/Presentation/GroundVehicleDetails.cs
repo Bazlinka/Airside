@@ -22,7 +22,7 @@ namespace Airside.Presentation
             var center = seat != null ? seat.transform.TransformPoint(seat.sharedMesh.bounds.center)
                 : cab != null ? cab.transform.TransformPoint(cab.sharedMesh.bounds.center) : Vector3.zero;
             if (seat != null || cab != null)
-                Driver(vehicle, center + Vector3.up * (seat != null ? .25f : -.35f));
+                Driver(vehicle, center + Vector3.up * (seat != null ? .05f : -.35f));
             foreach (var headlamp in parts.Where(p => p.name.EndsWith("Headlight L", StringComparison.OrdinalIgnoreCase)
                 || p.name.EndsWith("Headlight R", StringComparison.OrdinalIgnoreCase)))
             {

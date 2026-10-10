@@ -37,7 +37,8 @@ namespace Airside.Presentation
                 _flightCrewWanted.Add(aircraft.Registration);
                 var pose = AdelaideGround.StandPose(aircraft.Stand);
                 var nose = new Vector3(pose.NoseX, 0, pose.NoseZ);
-                var boardStart = total - DeparturePrep.BoardingSecondsFor(aircraft.Type, level);
+                var boardStart = total - DeparturePrep.BoardingSecondsFor(aircraft.Type, level)
+                    - (FlightCrewWork.Count(aircraft.Type)-1)*FlightCrewWork.BoardingSpacingSeconds - 20;
                 if (!_flightCrew.TryGetValue(aircraft.Registration, out var team))
                     _flightCrew[aircraft.Registration] = team = new List<RampCrewPerson>();
                 // One captain inspects; first officer and cabin crew brief alongside the boarding approach.

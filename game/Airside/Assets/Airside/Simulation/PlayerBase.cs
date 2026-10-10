@@ -199,6 +199,9 @@ namespace Airside.Simulation
                 return !AdelaideGround.IsTerminalGate(stand);
             }
 
+            if (level >= PlayerBaseLevel.International && AircraftCatalogue.CodeLetter(type) == 'F')
+                return AirlineOperations.StandFits(type, stand); // shared code F overflow when the leased pier is occupied
+
             foreach (var candidate in DedicatedStands(level, type))
                 if (candidate.Equals(stand))
                     return true;

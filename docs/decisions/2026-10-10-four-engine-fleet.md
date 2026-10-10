@@ -12,3 +12,5 @@ Affected: catalogue/acquisition, stands/base, ground service footprints, perform
 Migration: none. Existing stable string type IDs and save format already support additional catalogue entries. Existing saves keep old fleet/stands; new IDs survive capture/restore. No schema bump.
 
 Integration: newly merged economy v2 is retained. New market values live in Domain/LeaseTerms; acquisition deposits and FlightCostModel profiles derive from that shared table. No additional migration; existing v24 conversion remains untouched.
+
+Code F aircraft may use clear compatible shared F overflow lines when 18R is held; this prevents seasonal operators from indefinitely stranding an arrival. Narrowbody/E allocations remain unchanged. Private QA type injection grants only the required fixture base; full journeys respect the selected type and retain normal engine-start timing.

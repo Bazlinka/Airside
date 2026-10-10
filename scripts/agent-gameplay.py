@@ -261,6 +261,8 @@ def main(argv=None):
             directory=run/'journey'; directory.mkdir()
             flags=['-airsideAgentSaveDirectory', str(directory), '-airsideReviewCockpit', '-airsideReviewJourney', args.destination,
                    '-airsideReviewJourneyOut', str(directory), '-airsideReviewJourneyRate', '40']
+            if plan.get('aircraftType'):
+                flags += ['-airsideSoakAddType', plan['aircraftType'], '-airsideReviewCockpitType', plan['aircraftType']]
             text, seconds=launch(command(directory)+flags, directory, args.journey_timeout)
             frames=journey_verdict(text, directory)
             summary['scenarios'].append(dict(name='round-trip', status='passed', realSeconds=seconds, rate=40, frames=frames))

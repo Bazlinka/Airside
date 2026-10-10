@@ -15,3 +15,5 @@ Limits: exact variant cockpit instrumentation, upper-deck traversal, exhaustive 
 Final connectivity audit passes for both models within 5 cm after fixing the outer A380 pylons and root landing lights. Metadata/mirror audit passes: 2,168 GUIDs, 453 mirrors. Python syntax checks pass. The earlier interrupted native setup and intermediate connectivity failure are not final passes.
 
 Packaged review and integration with newly merged economy v2 are in progress; the counts above precede that merge.
+
+After economy integration: 84 selected headless checks pass; clean universal `4232e064` Mac build succeeds. Exact generator --check passes for glTF/bin/FBX. First B748 packaged follow/day/rear/dusk/night frames inspected; camera attempt correctly refused a cold engine-off cockpit (recorded failed scenario, not a product error). The fixture now grants its injected aircraft the required base and full journeys honor the selected type; nine focused purchase/overflow/save/wake cases and 12 runner regressions pass. Clear shared F overflow avoids a seasonal operator indefinitely blocking leased 18R. Final source/build/frame results pending below.

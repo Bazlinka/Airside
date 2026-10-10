@@ -428,6 +428,10 @@ namespace Airside.Simulation
             // keeps enough shared capacity available for the player's fleet.
             if (!NeedsTerminalGate(type) && !type.IsRotorcraft && CareerState.BaseLevel >= PlayerBaseLevel.ExpandedRegional)
                 return SuggestStandFor(type, except, allowPlayerDedicated: true);
+            // The historical right-hand F lines are shared airport capacity. Never strand
+            // a large jet behind a seasonal operator on its leased 18R pier.
+            if (AircraftCatalogue.CodeLetter(type) == 'F' && CareerState.BaseLevel >= PlayerBaseLevel.International)
+                return SuggestStandFor(type, except, allowPlayerDedicated: true);
 
             return null;
         }

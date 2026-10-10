@@ -105,6 +105,28 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void InternationalLargeJetUsesCompatibleSharedOverflowWhenItsPierIsHeld()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(9 * 3600));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(12), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var player = Airline.Player("Overflow test", "#338899");
+            var operatorAirline = Airline.Rex();
+            ops.AddAirline(player); ops.AddAirline(operatorAirline);
+            ops.AddAircraft(player, "VH-ST1", AircraftType.Saab340, new StableId("BAY-1"));
+            ops.AddAircraft(operatorAirline, "VH-HLD", AircraftType.AirbusA350900, new StableId("GATE-18"));
+            ops.RestoreCareerState(20_000_000, 99, nameof(OperatingTier.International), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 200,
+                baseLevel: PlayerBaseLevel.International, manualRotations: 200);
+            Assert.That(ops.BuyAircraft(AircraftType.AirbusA380800).Accepted, Is.True);
+            var bought = ops.FleetOf(player).Single(a => a.Type.Id == "A388");
+            Assert.That(bought.Stand.Value, Is.Not.EqualTo("GATE-18R"));
+            Assert.That(AirlineOperations.StandFits(bought.Type, bought.Stand), Is.True);
+            Assert.That(PlayerBase.CanUseStand(PlayerBaseLevel.International, bought.Type, bought.Stand), Is.True);
+            Assert.That(PlayerBase.CanUseStand(PlayerBaseLevel.JetGate, bought.Type, bought.Stand), Is.False);
+        }
+
+        [Test]
         public void A380LeavesSuperWakeBehindIt()
         {
             Assert.That(WakeSeparation.Seconds(AircraftType.AirbusA380800, AircraftType.Boeing7478, true), Is.EqualTo(180));

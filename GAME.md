@@ -7,7 +7,7 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 **Four-engine fleet (#778, Codex, 10 Oct):** B748 passenger 747-8 (Bailey's choice) and
 A388 A380-800 catalogue/purchase/performance/visual/audio support. Code F stands,
-International lease at 18R, four-engine ground footprints; A380 Super wake rules.
+International lease at 18R with clear shared F overflow, four-engine footprints; A380 Super wake rules.
 Original distinct 3D kits, skins/glazing, independent main trucks and packaged mirrors.
 Existing save schema, ambient Adelaide schedule and prior fleet assets preserved.
 112 initial headless and 86 native checks pass; economy v2 integrated, final review in progress.
@@ -21,7 +21,8 @@ Prior ground-team/gear/sky evidence and limits retained verbatim in
 new types use shared lease terms (A$4.86M / A$4.05M deposits). Standing-cost/loan work
 remains with its owning task. Prior economy and ground-team handoff is archived below.
 
-**Next:** finish focused native fleet/camera/save checks and inspect frames, then merge
+**Next:** first clean universal build and 84 integrated headless checks pass. Complete
+selected-aircraft engine-start/journey and native save/view review, then merge
 this scoped task. Preserve personal saves, running apps and other tools' economy work.
 Standing policy: focused checks chosen automatically; broad suites/soaks on request.
 

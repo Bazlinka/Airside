@@ -54,7 +54,9 @@ namespace Airside.Simulation
         // Older timed checks keep their original completion and charge semantics.
         // v23: recorded live weather, final commitment latch and flat arrival-view records.
         // Older saves use deterministic weather and rebuild presentation.
-        public const int CurrentVersion = 23;
+        // v24 (ADR 2026-10-09-economy-v2-real-dollar-scale): money is in real Australian dollars. Older saves have every
+        // money amount multiplied once on load by FlightCostModel.LegacySaveMoneyScale (see AirlineSave.ScaleLegacyMoney).
+        public const int CurrentVersion = 24;
 
         public int Version = CurrentVersion;
 
@@ -479,6 +481,31 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// One-time conversion of a pre-version-24 save to the Economy v2 money scale: funds, the accepted contract's pay, the
+        /// day's takings and every lifetime-revenue tally. Dispatch costs and fares are computed, not saved. Run on the freshly
+        /// deserialised data inside <see cref="Restore"/>, so it cannot apply twice to the same save. A flight booked before the
+        /// conversion and cancelled after it refunds at the new cost; that small difference is accepted.
+        /// </summary>
+        private static void ScaleLegacyMoney(AirlineSaveData data)
+        {
+            if (data == null || data.Version >= 24) return;
+            const long scale = FlightCostModel.LegacySaveMoneyScale;
+            data.CareerFunds *= scale;
+            data.ContractPaymentPerRotation *= scale;
+            data.ContractCompletionReward *= scale;
+            data.DayRevenue *= scale;
+            data.DayCost *= scale;
+            data.DayBestMargin *= scale;
+            data.CareerLifetimeRevenue *= scale;
+            foreach (var contract in data.ContractHistory ?? new List<CompletedContractSaveRecord>())
+                contract.TotalPaid *= scale;
+            foreach (var aircraft in data.Fleet ?? new List<AircraftRecord>())
+                aircraft.LifetimeRevenue *= scale;
+            foreach (var aircraft in data.OutstationFleet ?? new List<OutstationAircraftSaveRecord>())
+                aircraft.LifetimeRevenue *= scale;
+        }
+
+        /// <summary>
         /// Rebuild an airline game from a save, with <paramref name="clock"/> already set to
         /// <see cref="AirlineSaveData.ClockSeconds"/>. Throws <see cref="FormatException"/>
         /// on anything it does not recognise, rather than resuming a half-right game.
@@ -491,6 +518,8 @@ namespace Airside.Simulation
                 throw new FormatException($"Save version {data.Version} is not supported (expected 1 to {AirlineSaveData.CurrentVersion}).");
             if (clock.Now.ElapsedSeconds != data.ClockSeconds)
                 throw new ArgumentException("Set the clock to the saved time before restoring.", nameof(clock));
+            if (data.Version < 24)
+                ScaleLegacyMoney(data);
             if (!DestinationCatalogue.TryFind(data.HomeCode, out var home) || !home.Equals(DestinationCatalogue.Adelaide))
                 throw new FormatException($"Unknown home airport '{data.HomeCode}'.");
             if (data.RandomState == 0)

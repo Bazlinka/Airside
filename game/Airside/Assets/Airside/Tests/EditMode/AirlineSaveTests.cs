@@ -211,7 +211,7 @@ namespace Airside.Tests
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(73),
                 Airline.Player("Base Test", "#2E7D32"));
-            ops.RestoreCareerState(50_000, 95, nameof(OperatingTier.Regional), null, 0, 0,
+            ops.RestoreCareerState(50_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Regional), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 12, baseLevel: PlayerBaseLevel.ExpandedRegional);
             Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.True);
 
@@ -235,7 +235,7 @@ namespace Airside.Tests
             var ops = new AirlineOperations(clock, new SeededRandomSource(73), DestinationCatalogue.Adelaide,
                 AirlineOperations.AdelaideRegionalBays);
             ops.AddAirline(Airline.Player("Legacy Fleet", "#2E7D32"));
-            ops.RestoreCareerState(200_000, 95, nameof(OperatingTier.International), null, 0, 0,
+            ops.RestoreCareerState(200_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.International), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 40, baseLevel: PlayerBaseLevel.International);
 
             var player = ops.PlayerAirline;

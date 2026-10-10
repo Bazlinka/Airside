@@ -13,7 +13,7 @@ namespace Airside.Tests
         private static (ManualSimulationClock Clock, AirlineOperations Ops, FleetAircraft Plane) Setup()
         {
             var (clock, ops, plane) = HudTestAirline.Create();
-            ops.RestoreCareerState(500_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            ops.RestoreCareerState(500_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 100, baseLevel: PlayerBaseLevel.ExpandedRegional, manualRotations: 12);
             Assert.That(ops.OpenOutstationBase("MEL").Accepted, Is.True);
             Assert.That(ops.BuyAircraftAtOutstation(AircraftType.Dash8Q400, "MEL").Accepted, Is.True);

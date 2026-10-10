@@ -76,13 +76,13 @@ namespace Airside.Simulation
     public static class Difficulty
     {
         public static readonly DifficultyProfile Relaxed = new(CareerDifficulty.Relaxed, "Relaxed",
-            "Room to learn. A bigger float and kinder margins.", 6_000, 1.20, 0.85, 0.5);
+            "Room to learn. A bigger float and kinder margins.", 3_200_000, 1.20, 0.85, 0.5);
 
         public static readonly DifficultyProfile Standard = new(CareerDifficulty.Standard, "Standard",
             "The intended airline business. Every flight counts.", FlightEconomics.StartingFunds, 1.0, 1.0, 1.0);
 
         public static readonly DifficultyProfile Demanding = new(CareerDifficulty.Demanding, "Demanding",
-            "Thin margins and unforgiving punctuality.", 2_000, 0.90, 1.10, 1.5);
+            "Thin margins and unforgiving punctuality.", 1_100_000, 0.90, 1.10, 1.5);
 
         public static IReadOnlyList<DifficultyProfile> All { get; } = new[] { Relaxed, Standard, Demanding };
 

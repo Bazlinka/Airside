@@ -26,7 +26,7 @@ namespace Airside.Tests
             return (clock, operations);
         }
 
-        private static void Restore(AirlineOperations operations, long funds = 100_000, int reliability = 100,
+        private static void Restore(AirlineOperations operations, long funds = 100_000 * FlightCostModel.LegacySaveMoneyScale, int reliability = 100,
             OperatingTier tier = OperatingTier.Provisional, IEnumerable<string> processed = null,
             IEnumerable<string> completed = null, int rotations = 0,
             PlayerBaseLevel baseLevel = PlayerBaseLevel.Starter, IEnumerable<string> served = null,
@@ -111,14 +111,14 @@ namespace Airside.Tests
         {
             var fleet = new[] { AircraftType.Saab340, AircraftType.Atr42, AircraftType.Atr42 };
             // Every Regional-stage goal done while still Provisional — but no contract fulfilled.
-            var career = new AirlineCareerState(50_000, 95, OperatingTier.Provisional,
+            var career = new AirlineCareerState(50_000 * FlightCostModel.LegacySaveMoneyScale, 95, OperatingTier.Provisional,
                 completedPlayerRotations: 40, baseLevel: PlayerBaseLevel.ExpandedRegional,
                 servedDestinations: new[] { "KGC", "PLO", "WYA", "MGB" });
             career.EvaluateTier(fleet, fleet.Length);
             Assert.That(career.Tier, Is.EqualTo(OperatingTier.Provisional),
                 "Domestic must not be reachable before Regional");
 
-            var proved = new AirlineCareerState(50_000, 95, OperatingTier.Provisional,
+            var proved = new AirlineCareerState(50_000 * FlightCostModel.LegacySaveMoneyScale, 95, OperatingTier.Provisional,
                 completedContractIds: new[] { RouteContractCatalogue.RegionalKingscoteIntro.Id },
                 completedPlayerRotations: 40, baseLevel: PlayerBaseLevel.ExpandedRegional,
                 servedDestinations: new[] { "KGC", "PLO", "WYA", "MGB" });
@@ -146,7 +146,7 @@ namespace Airside.Tests
         {
             var (_, operations) = NewAirline();
             Restore(operations, tier: OperatingTier.Domestic, rotations: 60, reliability: 95,
-                baseLevel: PlayerBaseLevel.JetGate, funds: 500_000);
+                baseLevel: PlayerBaseLevel.JetGate, funds: 500_000 * FlightCostModel.LegacySaveMoneyScale);
             Assert.That(operations.BuyAircraft(AircraftType.AirbusA321Neo).Accepted, Is.True);
             var jet = operations.FleetOf(operations.PlayerAirline).First(a => a.Type.Id == AircraftType.AirbusA321Neo.Id);
             if (jet.State == FleetState.AtStand)
@@ -226,7 +226,7 @@ namespace Airside.Tests
         {
             var (_, operations) = NewAirline();
             Restore(operations, tier: OperatingTier.Domestic, rotations: 60, reliability: 95,
-                baseLevel: PlayerBaseLevel.JetGate, funds: 500_000);
+                baseLevel: PlayerBaseLevel.JetGate, funds: 500_000 * FlightCostModel.LegacySaveMoneyScale);
             Assert.That(operations.OpenOutstationBase("PER").Accepted, Is.True);
             Assert.That(operations.HasOutstationRoute(AircraftType.Atr42, "PER"), Is.False);
             var refused = operations.BuyAircraftAtOutstation(AircraftType.Atr42, "PER");
@@ -240,7 +240,7 @@ namespace Airside.Tests
         {
             var (clock, operations) = NewAirline();
             Restore(operations, rotations: 5, completed: new[] { RouteContractCatalogue.RegionalKingscoteIntro.Id },
-                baseLevel: PlayerBaseLevel.Starter, funds: 50_000);
+                baseLevel: PlayerBaseLevel.Starter, funds: 50_000 * FlightCostModel.LegacySaveMoneyScale);
             operations.Update();
             Assert.That(operations.TryTakeCareerEvent(out _), Is.False, "a restored state is not news");
 

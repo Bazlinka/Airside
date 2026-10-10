@@ -811,7 +811,7 @@ namespace Airside.Simulation
             return false;
         }
 
-        public long NextOutstationCost => CareerState.OutstationBases.Count == 0 ? 15_000 : 40_000;
+        public long NextOutstationCost => CareerState.OutstationBases.Count == 0 ? 500_000 : 1_400_000;
 
         /// <summary>ADR 0139: each outstation is earned, not just bought: (reliability, flights) for the 1st, 2nd, 3rd.</summary>
         public static readonly (int Reliability, int Flights)[] OutstationGates = { (85, 40), (88, 70), (90, 110) };

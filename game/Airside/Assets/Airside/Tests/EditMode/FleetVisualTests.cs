@@ -203,7 +203,7 @@ namespace Airside.Tests
             ops.AddAirline(player);
             // This fixture brings two player aircraft home. Give it the two-aircraft regional
             // footprint the scenario needs, rather than asking a Starter base to park both.
-            ops.RestoreCareerState(10_000, 90, nameof(OperatingTier.Provisional), null, 0, 0,
+            ops.RestoreCareerState(10_000 * FlightCostModel.LegacySaveMoneyScale, 90, nameof(OperatingTier.Provisional), null, 0, 0,
                 new List<string>(), new List<string>(), 4, baseLevel: PlayerBaseLevel.ExpandedRegional);
             DestinationCatalogue.TryFind("KGC", out var kingscote);
             var restore = typeof(AirlineOperations).GetMethod("RestoreAircraft",

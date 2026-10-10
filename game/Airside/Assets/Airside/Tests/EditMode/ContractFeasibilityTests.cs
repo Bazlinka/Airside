@@ -69,7 +69,7 @@ namespace Airside.Tests
             var ops = Start(out _);
             foreach (var reliability in new[] { 40, 70, 100 })
             {
-                ops.RestoreCareerState(1_000_000, reliability, nameof(OperatingTier.Regional), null, 0, 0,
+                ops.RestoreCareerState(1_000_000 * FlightCostModel.LegacySaveMoneyScale, reliability, nameof(OperatingTier.Regional), null, 0, 0,
                     Array.Empty<string>(), Array.Empty<string>(), 0);
                 var owned = ops.Fleet.Where(a => a.Airline.IsPlayer).Select(a => a.Type.Id).ToHashSet();
                 foreach (var offer in ops.MarketOffers())

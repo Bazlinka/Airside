@@ -151,9 +151,12 @@ namespace Airside.Tests
             RunTo(clock, ops, 100);
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(50)).Accepted, Is.False, "in the past");
 
-            ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(500));
-            RunTo(clock, ops, 501);
-            Assert.That(ops.ScheduleDeparture(plane, Code("PLO"), new SimulationTime(500)).Accepted, Is.False, "already taxiing");
+            // Booked from t=100, the crew's full preparation must finish before pushback, so the
+            // earliest departure that really starts at its booked time is now + lead.
+            var departAt = 100 + DeparturePrep.LeadSeconds(plane.Type, PlayerBaseLevel.Starter);
+            ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(departAt));
+            RunTo(clock, ops, departAt + 1);
+            Assert.That(ops.ScheduleDeparture(plane, Code("PLO"), new SimulationTime(departAt)).Accepted, Is.False, "already taxiing");
             Assert.That(ops.CancelDeparture(plane).Accepted, Is.False);
 
             Assert.That(ops.ScheduleDeparture(other, Code("KGC"), new SimulationTime(5000)).Accepted, Is.True);
@@ -343,10 +346,15 @@ namespace Airside.Tests
             ops.AddAirline(player);
             var bayPlane = ops.AddAircraft(player, "VH-PAA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
             var gatePlane = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing7378, new StableId("GATE-18"));
-            ops.ScheduleDeparture(bayPlane, Code("KGC"), new SimulationTime(600));
-            ops.ScheduleDeparture(gatePlane, Code("MEL"), new SimulationTime(600));
+            // Depart no earlier than either aircraft's full preparation (fuel, catering, baggage,
+            // boarding) allows; baggage time scales with the aircraft, so a jet needs longer.
+            var departAt = System.Math.Max(
+                DeparturePrep.LeadSeconds(bayPlane.Type, PlayerBaseLevel.Starter),
+                DeparturePrep.LeadSeconds(gatePlane.Type, PlayerBaseLevel.Starter)) + 60;
+            ops.ScheduleDeparture(bayPlane, Code("KGC"), new SimulationTime(departAt));
+            ops.ScheduleDeparture(gatePlane, Code("MEL"), new SimulationTime(departAt));
 
-            RunTo(clock, ops, 600);
+            RunTo(clock, ops, departAt);
             Assert.That(bayPlane.State, Is.EqualTo(FleetState.TaxiOut));
             Assert.That(gatePlane.State, Is.EqualTo(FleetState.TaxiOut),
                 "a different apron's pushback should not be held up by the bay's release gate");
@@ -527,7 +535,7 @@ namespace Airside.Tests
         public void SellAircraft_RefundsAFractionAndRemovesItFromTheFleet()
         {
             var (_, ops, _) = PlayerOnly();
-            ops.RestoreCareerState(200_000, 100, nameof(OperatingTier.International), null, 0, 0,
+            ops.RestoreCareerState(200_000 * FlightCostModel.LegacySaveMoneyScale, 100, nameof(OperatingTier.International), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 40, baseLevel: PlayerBaseLevel.ExpandedRegional);
             Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.True);
             var bought = ops.Fleet.Single(a => a.Type.Id == AircraftType.Atr42.Id);

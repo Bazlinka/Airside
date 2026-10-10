@@ -54,13 +54,13 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void SaabCheck_CostsFourHundredAndLastsTwoHours()
+        public void SaabCheck_PaysTheAccruedReserveAndLastsTwoHours()
         {
-            Assert.That(Maintenance.CheckCost(AircraftType.Saab340), Is.EqualTo(400L));
+            Assert.That(Maintenance.CheckCost(AircraftType.Saab340), Is.EqualTo(Math.Max(Maintenance.MinimumCheckCost, FlightCostModel.CheckCost(AircraftType.Saab340, Maintenance.IntervalRotations))));
             Assert.That(Maintenance.CheckSeconds(AircraftType.Saab340), Is.EqualTo(2 * 3600L));
             Assert.That(Maintenance.CheckSeconds(AircraftType.Boeing7378), Is.EqualTo(4 * 3600L));
             Assert.That(Maintenance.CheckCost(AircraftType.Atr42),
-                Is.EqualTo(Math.Max(300L, (long)Math.Round(AircraftAcquisition.Atr42.Price * Maintenance.CostFraction))));
+                Is.EqualTo(Math.Max(Maintenance.MinimumCheckCost, FlightCostModel.CheckCost(AircraftType.Atr42, Maintenance.IntervalRotations))));
         }
 
         [Test]
@@ -103,7 +103,7 @@ namespace Airside.Tests
             _ = clock3;
 
             var (clock4, ops4, broke) = PlayerOnly();
-            ops4.RestoreCareerState(10, 100, nameof(OperatingTier.Provisional), null, 0, 0,
+            ops4.RestoreCareerState(10 * FlightCostModel.LegacySaveMoneyScale, 100, nameof(OperatingTier.Provisional), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 0);
             Assert.That(ops4.StartCheck(broke).Accepted, Is.False, "cannot afford");
             _ = clock4;

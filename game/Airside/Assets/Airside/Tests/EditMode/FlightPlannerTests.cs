@@ -144,9 +144,13 @@ namespace Airside.Tests
             var jet = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing7378, new StableId("GATE-18"));
             var kingscote = DestinationCatalogue.Australia.First(d => d.Code == "KGC");
             var melbourne = DestinationCatalogue.Australia.First(d => d.Code == "MEL");
-            ops.ScheduleDeparture(atr, kingscote, new SimulationTime(600));
-            ops.ScheduleDeparture(jet, melbourne, new SimulationTime(600));
-            clock.Set(new SimulationTime(650));
+            // Depart after both aircraft's full ground preparation so each really pushes back at its booked time.
+            var departAt = System.Math.Max(
+                DeparturePrep.LeadSeconds(atr.Type, PlayerBaseLevel.Starter),
+                DeparturePrep.LeadSeconds(jet.Type, PlayerBaseLevel.Starter)) + 60;
+            ops.ScheduleDeparture(atr, kingscote, new SimulationTime(departAt));
+            ops.ScheduleDeparture(jet, melbourne, new SimulationTime(departAt));
+            clock.Set(new SimulationTime(departAt + 50));
             ops.Update();
 
             var atrBack = FlightPlanner.ExpectedBackAt(atr, 3600, clock.Now);

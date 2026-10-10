@@ -1,5 +1,11 @@
 ## Where to resume
 
+**Economy v2, step 1 (9 Oct, Claude):** real Australian dollars. Flight cost/pay come from `FlightCostModel`; aircraft "prices" are lease
+deposits (`LeaseTerms`); opening cash A$1.5M; save v24 scales old money x35 once on load. Real `CareerBot` pacing matches the old economy
+(Regional 10.9 h, Domestic 30 h, International 74 h; 5 aircraft at 150 h). Not done: daily lease/insurance, bank loan + recovery, "deposit/lease"
+HUD wording, native check of wide money in the HUD (unverified; no Unity run). Plan: `docs/plans/economy-competitors-walkable-roadmap.md`;
+decision/evidence: `docs/decisions/2026-10-09-economy-v2-real-dollar-scale.md`. Main CI is red on 10 older, unrelated headless tests.
+
 **Working ground teams (9 Oct, Codex, #774 / PR #776):** airport-provided larger service teams;
 shared bag allowance and physical carrying trips determine minimum player baggage
 preparation, including equipment setup and clearing. Reuses shipped characters/tools.

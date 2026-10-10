@@ -72,12 +72,13 @@ namespace Airside.Tests
             var player = Airline.Player("Large jet purchase", "#338899");
             ops.AddAirline(player);
             ops.AddAircraft(player, "VH-ST1", AircraftType.Saab340, new StableId("BAY-1"));
-            ops.RestoreCareerState(1_000_000, 99, nameof(OperatingTier.International), null, 0, 0,
+            ops.RestoreCareerState(20_000_000, 99, nameof(OperatingTier.International), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 200,
                 baseLevel: PlayerBaseLevel.International, manualRotations: 200);
             AircraftType.TryFromId(id, out var type);
             var result = ops.BuyAircraft(type);
             Assert.That(result.Accepted, Is.True, result.Reason);
+            Assert.That(ops.CareerState.Funds, Is.EqualTo(20_000_000 - LeaseTerms.Deposit(type)));
             var bought = ops.FleetOf(player).Single(a => a.Type.Id == id);
             Assert.That(bought.Stand.Value, Is.EqualTo("GATE-18R"));
             var restored = AirlineSave.Restore(AirlineSave.Capture(ops), clock);

@@ -18,7 +18,7 @@ namespace Airside.Tests
         private static (ManualSimulationClock Clock, AirlineOperations Ops) WithMelbourne()
         {
             var (clock, ops, _) = HudTestAirline.Create();
-            ops.RestoreCareerState(500_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            ops.RestoreCareerState(500_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 100,
                 baseLevel: PlayerBaseLevel.ExpandedRegional, manualRotations: 12);
             Assert.That(ops.OpenOutstationBase("MEL").Accepted, Is.True);
@@ -105,7 +105,7 @@ namespace Airside.Tests
         public void Sort_OrdersByTypeInsideEachBase()
         {
             var (clock, ops, _) = HudTestAirline.Create();
-            ops.RestoreCareerState(20_000, 90, nameof(OperatingTier.Provisional), null, 0, 0,
+            ops.RestoreCareerState(20_000 * FlightCostModel.LegacySaveMoneyScale, 90, nameof(OperatingTier.Provisional), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 6, baseLevel: PlayerBaseLevel.ExpandedRegional);
             ops.AddAircraft(ops.PlayerAirline, "VH-AAA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[2]);
 

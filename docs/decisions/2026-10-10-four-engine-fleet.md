@@ -10,3 +10,5 @@ Original distinct four-engine geometry and four independent main trucks reuse es
 Affected: catalogue/acquisition, stands/base, ground service footprints, performance/economics, live sky model selection, visual/audio profiles, original generator, asset/spec registers. Ambient airline schedules and project plan stay intact.
 
 Migration: none. Existing stable string type IDs and save format already support additional catalogue entries. Existing saves keep old fleet/stands; new IDs survive capture/restore. No schema bump.
+
+Integration: newly merged economy v2 is retained. New market values live in Domain/LeaseTerms; acquisition deposits and FlightCostModel profiles derive from that shared table. No additional migration; existing v24 conversion remains untouched.

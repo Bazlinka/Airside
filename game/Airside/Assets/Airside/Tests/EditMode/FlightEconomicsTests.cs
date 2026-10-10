@@ -13,48 +13,48 @@ namespace Airside.Tests
             var km = DestinationCatalogue.Adelaide.DistanceKmTo(kgc);
             var cost = FlightEconomics.DispatchCost(AircraftType.Saab340, km);
             var pay = FlightEconomics.FlightPay(AircraftType.Saab340, km);
-            Assert.That(cost, Is.GreaterThan(80));
+            Assert.That(cost, Is.GreaterThan(1_000), "real dollars: a Kingscote rotation costs thousands");
             Assert.That(pay, Is.GreaterThan(cost), "a starter hop must not go broke on the operating loop alone");
             Assert.That(AirlineCareerState.StartingFunds, Is.GreaterThan(cost * 4),
                 "opening float covers several hops before the first return");
-            Assert.That(AirlineCareerState.StartingFunds, Is.LessThan(AircraftAcquisition.Atr42.Price),
-                "opening float alone cannot buy the first step-up aircraft");
+            Assert.That(AirlineCareerState.StartingFunds, Is.GreaterThan(AircraftAcquisition.Atr42.Price),
+                "opening cash covers the first step-up aircraft's lease deposit");
         }
 
         [Test]
         public void TurbopropDispatch_IsCheaperThanAJetOnTheSameLeg()
         {
             const double km = 650;
-            Assert.That(FlightEconomics.Weight(AircraftType.Atr42), Is.EqualTo(1.0));
-            Assert.That(FlightEconomics.Weight(AircraftType.Boeing78710), Is.GreaterThan(FlightEconomics.Weight(AircraftType.Boeing7378)));
-            Assert.That(FlightEconomics.Weight(AircraftType.Boeing7378), Is.EqualTo(2.2));
             Assert.That(FlightEconomics.DispatchCost(AircraftType.Atr42, km),
                 Is.LessThan(FlightEconomics.DispatchCost(AircraftType.Boeing78710, km)));
             Assert.That(FlightEconomics.FlightPay(AircraftType.Atr42, km),
                 Is.LessThan(FlightEconomics.FlightPay(AircraftType.Boeing78710, km)));
-            Assert.That(FlightEconomics.FlightPay(AircraftType.Atr42, km, RouteBand.Domestic),
-                Is.GreaterThan(FlightEconomics.FlightPay(AircraftType.Atr42, km, RouteBand.Regional)));
         }
 
         [Test]
-        public void DomesticBand_PaysMoreThanRegionalOnTheSameLeg()
+        public void LongerBands_PayMoreForTheSameAircraft()
         {
-            const double km = 650;
-            Assert.That(FlightEconomics.FlightPay(AircraftType.Dash8Q400, km, RouteBand.Domestic),
-                Is.GreaterThan(FlightEconomics.FlightPay(AircraftType.Dash8Q400, km, RouteBand.Regional)));
-            Assert.That(RouteAccess.PayMultiplier(RouteBand.LongHaul), Is.GreaterThan(RouteAccess.PayMultiplier(RouteBand.National)));
+            Assert.That(DestinationCatalogue.TryFind("PLO", out var plo), Is.True);
+            Assert.That(DestinationCatalogue.TryFind("MEL", out var mel), Is.True);
+            Assert.That(DestinationCatalogue.TryFind("PER", out var per), Is.True);
+            long Pay(Destination d) => FlightEconomics.FlightPay(AircraftType.Boeing737800,
+                DestinationCatalogue.Adelaide.DistanceKmTo(d), RouteAccess.BandOf(d));
+            Assert.That(Pay(mel), Is.GreaterThan(Pay(plo)), "Melbourne pays more than Port Lincoln");
+            Assert.That(Pay(per), Is.GreaterThan(Pay(mel)), "Perth pays more than Melbourne");
         }
 
         [Test]
-        public void OpeningFloat_CoversSeveralSaabHopsButNotTheFirstHangarBuy()
+        public void OpeningFloat_CoversSeveralSaabHopsAndTheFirstStepUpButNotAWidebody()
         {
             Assert.That(DestinationCatalogue.TryFind("KGC", out var kgc), Is.True);
             var kgcKm = DestinationCatalogue.Adelaide.DistanceKmTo(kgc);
             var saabHop = FlightEconomics.DispatchCost(AircraftType.Saab340, kgcKm);
             Assert.That(FlightEconomics.StartingFunds, Is.GreaterThan(saabHop * 4),
                 "opening float still covers a short bank of starter hops");
-            Assert.That(FlightEconomics.StartingFunds, Is.LessThan(AircraftAcquisition.Atr42.Price),
-                "tight float — contracts and flying buy the ATR, not the opening cash alone");
+            Assert.That(FlightEconomics.StartingFunds, Is.GreaterThan(AircraftAcquisition.Atr42.Price),
+                "the opening cash covers the ATR 42 lease deposit");
+            Assert.That(FlightEconomics.StartingFunds, Is.LessThan(AircraftAcquisition.AirbusA330900.Price),
+                "but not a widebody deposit: the player has to fly to earn each step up");
         }
 
         [Test]

@@ -4,9 +4,9 @@
 #   - follow-jet-day / follow-jet-close / follow-storm-landing (one soak, ~780–786s)
 #   - follow-jet-takeoff (auto-takeoff, ~1330s live — jet TakingOff tyre roll)
 #   - follow-freighter / follow-hangar-tow
-#   - follow-boarding-tape / follow-human-ops-close (one soak, ~320–323s)
+#   - follow-boarding-tape / follow-human-ops-close (one soak, ~372–375s)
 #
-# Landing and boarding batches share one soak so Stage C does not pay 780s / 320s
+# Landing and boarding batches share one soak so Stage C does not pay 780s / 372s
 # three and two times. Requires a rebuilt player with multi-shot review support.
 # Does not invent RESULTS.
 # Usage:
@@ -153,8 +153,8 @@ capture_shots 1000 \
 
 # Boarding tape + human-ops close share one soak (same -airsideReviewBoarding window).
 capture_shots 480 \
-  follow-boarding-tape:320:0.55:clear \
-  follow-human-ops-close:323:0.35 \
+  follow-boarding-tape:372:0.55:clear \
+  follow-human-ops-close:375:0.35 \
   -- -airsideReviewBoarding -airsideReviewTime 12:00
 
 echo "Remaining P0 stills written under $shots"

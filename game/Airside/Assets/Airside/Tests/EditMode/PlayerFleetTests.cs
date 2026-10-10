@@ -26,7 +26,7 @@ namespace Airside.Tests
         private static (ManualSimulationClock Clock, AirlineOperations Operations) WithMelbourneDash()
         {
             var (clock, operations) = NewAirline();
-            operations.RestoreCareerState(500_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            operations.RestoreCareerState(500_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 100,
                 baseLevel: PlayerBaseLevel.JetGate, manualRotations: 12);
             Assert.That(operations.OpenOutstationBase("MEL").Accepted, Is.True);
@@ -195,7 +195,7 @@ namespace Airside.Tests
         public void SellAircraft_RefusesABookedFlightAndKeepsTheAircraft()
         {
             var (_, operations) = NewAirline();
-            operations.RestoreCareerState(500_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            operations.RestoreCareerState(500_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 100, baseLevel: PlayerBaseLevel.Starter);
             Assert.That(operations.BuyAircraft(AircraftType.Saab340).Accepted, Is.True);
             var second = operations.Fleet.Single(a => a.Registration != "VH-TST");
@@ -214,7 +214,7 @@ namespace Airside.Tests
         public void SellAircraft_DropsTheRepeatPlanOfTheAircraftItSells()
         {
             var (_, operations) = NewAirline();
-            operations.RestoreCareerState(500_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            operations.RestoreCareerState(500_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 100, baseLevel: PlayerBaseLevel.Starter,
                 manualRotations: 12);
             Assert.That(operations.BuyAircraft(AircraftType.Saab340).Accepted, Is.True);

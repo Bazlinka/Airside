@@ -372,6 +372,9 @@ namespace Airside.Presentation
 
             SpinOneJetFan(fanLeft, leftN1);
             SpinOneJetFan(fanRight, rightN1);
+            var parts = PartsFor(aircraft);
+            SpinOneJetFan(parts.OuterFanLeft, leftN1);
+            SpinOneJetFan(parts.OuterFanRight, rightN1);
         }
 
         /// <summary>One turbofan. A shut-down fan stands still.</summary>
@@ -1284,6 +1287,8 @@ namespace Airside.Presentation
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.AirbusA330900);
             if (AircraftVisualProfiles.IsBoeing7879(type))
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.Boeing7879);
+            if (type?.Id == AircraftType.Boeing7478.Id || type?.Id == AircraftType.AirbusA380800.Id)
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.For(type));
             if (AircraftVisualProfiles.IsDash8Q400(type))
                 return BuildDash8Q400(name, accent, liveryDecalRelativePath);
             if (AircraftVisualProfiles.IsSaab340(type))
@@ -1412,6 +1417,17 @@ namespace Airside.Presentation
 
         private static string RenameAircraftPart(string kitName)
         {
+            if (kitName.StartsWith("fan_blade_outer_l", StringComparison.Ordinal))
+                return "Fan blade outer L" + kitName.Substring("fan_blade_outer_l".Length);
+            if (kitName.StartsWith("fan_blade_outer_r", StringComparison.Ordinal))
+                return "Fan blade outer R" + kitName.Substring("fan_blade_outer_r".Length);
+            if (kitName == "gear_body_left") return "Gear L body";
+            if (kitName == "gear_body_right") return "Gear R body";
+            if (kitName.Contains("_outer_"))
+            {
+                var inner = kitName.Replace("_outer_", "_");
+                return "Outer " + RenameAircraftPart(inner);
+            }
             if (kitName.StartsWith("livery_cowl_", StringComparison.Ordinal))
                 return kitName.EndsWith("left", StringComparison.Ordinal) ? "Engine livery L" : "Engine livery R";
             if (kitName is "livery_secondary" or "livery_emblem")
@@ -1654,6 +1670,7 @@ namespace Airside.Presentation
 
         private static Color? AircraftPartColor(string kitName, Color accent)
         {
+            if (kitName.Contains("_outer_")) return AircraftPartColor(kitName.Replace("_outer_", "_"), accent);
             if (kitName.StartsWith("livery_", StringComparison.Ordinal))
                 return AircraftLiveryPaint.Colour(kitName, accent);
             if (kitName.StartsWith("glazing_", StringComparison.Ordinal))
@@ -1884,7 +1901,7 @@ namespace Airside.Presentation
         /// </summary>
         private static void NestJetFanBlades(Transform aircraft)
         {
-            Transform leftFan = null, rightFan = null;
+            Transform leftFan = null, rightFan = null, outerLeft = null, outerRight = null;
             var leftBlades = new List<Transform>();
             var rightBlades = new List<Transform>();
             var children = AirsideNamedChildren.Get(aircraft);
@@ -1893,10 +1910,18 @@ namespace Airside.Presentation
             {
                 var child = children[i];
                 var childName = names[i];
-                if (childName == "Fan L") leftFan = child;
+                if (childName == "Outer Fan L") outerLeft = child;
+                else if (childName == "Outer Fan R") outerRight = child;
+                else if (childName == "Fan L") leftFan = child;
                 else if (childName == "Fan R") rightFan = child;
                 else if (childName.StartsWith("Fan blade L", StringComparison.Ordinal)) leftBlades.Add(child);
                 else if (childName.StartsWith("Fan blade R", StringComparison.Ordinal)) rightBlades.Add(child);
+            }
+
+            for (var i = 0; i < children.Length; i++)
+            {
+                if (names[i].StartsWith("Fan blade outer L", StringComparison.Ordinal)) NestUnderProp(outerLeft, children[i], names[i]);
+                if (names[i].StartsWith("Fan blade outer R", StringComparison.Ordinal)) NestUnderProp(outerRight, children[i], names[i]);
             }
 
             foreach (var blade in leftBlades)
@@ -1932,7 +1957,7 @@ namespace Airside.Presentation
             var names = AirsideNamedChildren.Names(aircraft);
             for (var i = 0; i < children.Length; i++)
             {
-                if (children[i] == aircraft || !(names[i] is "Fan L" or "Fan R"))
+                if (children[i] == aircraft || !(names[i] is "Fan L" or "Fan R" or "Outer Fan L" or "Outer Fan R"))
                     continue;
                 RebakePropellerPivot(children[i]);
             }
@@ -2125,7 +2150,7 @@ namespace Airside.Presentation
         /// </summary>
         private static void NestLandingGearParts(Transform aircraft)
         {
-            Transform gearNose = null, gearL = null, gearR = null;
+            Transform gearNose = null, gearL = null, gearR = null, bodyL = null, bodyR = null;
             var movingParts = new List<Transform>();
             var namedChildren21 = AirsideNamedChildren.Get(aircraft);
             var childNames21 = AirsideNamedChildren.Names(aircraft);
@@ -2133,7 +2158,9 @@ namespace Airside.Presentation
             {
                 var child = namedChildren21[childIndex21];
                 var childName = childNames21[childIndex21];
-                if (childName == "Gear nose") gearNose = child;
+                if (childName == "Gear L body") bodyL = child;
+                else if (childName == "Gear R body") bodyR = child;
+                else if (childName == "Gear nose") gearNose = child;
                 else if (childName == "Gear L") gearL = child;
                 else if (childName == "Gear R") gearR = child;
                 else if (childName == "TaxiLight"
@@ -2148,7 +2175,8 @@ namespace Airside.Presentation
             foreach (var part in movingParts)
             {
                 var lower = part.name.ToLowerInvariant();
-                var gear = (part.name == "TaxiLight" || lower.Contains("nose")) ? gearNose
+                var gear = lower.Contains("l body") ? bodyL : lower.Contains("r body") ? bodyR
+                    : (part.name == "TaxiLight" || lower.Contains("nose")) ? gearNose
                     : part.name.IndexOf(" L", StringComparison.Ordinal) >= 0 ? gearL
                     : part.name.IndexOf(" R", StringComparison.Ordinal) >= 0 ? gearR
                     : null;
@@ -2218,6 +2246,8 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(partName))
                 return 0;
             var lower = partName.ToLowerInvariant();
+            if (lower.StartsWith("outer ")) return WingMountedSide(partName.Substring(6));
+            if (partName is "Gear L body" or "Gear R body") return 0;
             var attached = lower.StartsWith("wing root")
                            || lower.StartsWith("wing fairing")
                            || lower.StartsWith("wingtip")
@@ -2386,7 +2416,7 @@ namespace Airside.Presentation
             for (var i = 0; i < children.Length; i++)
             {
                 var fan = children[i];
-                if (fan == aircraft || !(names[i] is "Fan L" or "Fan R") || fan.Find("FanDisc") != null)
+                if (fan == aircraft || !(names[i] is "Fan L" or "Fan R" or "Outer Fan L" or "Outer Fan R") || fan.Find("FanDisc") != null)
                     continue;
 
                 var radiusSquared = 0f;

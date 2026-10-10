@@ -46,6 +46,8 @@ TYPES = {
     "A339": ("AirbusA330900", -0.68),
     "B789": ("Boeing7879", -0.68),
     "B78X": ("Boeing78710", -0.68),
+    "B748": ("Boeing7478", -0.68),
+    "A388": ("AirbusA380800", -0.68),
 }
 
 CAP_PER_CHARACTER_SIZE = 64.0 / 10.0 * 0.716
@@ -123,6 +125,10 @@ def layout(cid):
     gap = 0.06 * rx
     cap_bottom = top + gap
     cap = min(0.60 * (crown - cap_bottom), 1.20 if wide else 0.42 if turboprop else 0.75)
+    if cid == "A388":
+        # Two window belts leave a thinner crown band. Fit a readable 0.9 m cap
+        # on its measured upper ellipse rather than assuming a round single deck.
+        cap = min(0.90, 0.90 * (crown - cap_bottom))
     tx, ty, ttilt = tangent(rx, cy, ry, cap_bottom + cap / 2)
     front = zf - (0.2 if turboprop else 0.4)
     stop = za + 1.0
@@ -134,6 +140,20 @@ def layout(cid):
     reg_cap = 0.16 * rx
     rx_, ry_, rtilt = tangent(rx, cy, ry, top + gap + reg_cap / 2)
     reg_aft = za + (0.4 if turboprop else 0.8)
+    if cid == "B748":
+        # Maximum-height sections belong to the forward hump, not the aft cabin.
+        # Measure the actual aft main-deck skin for the registration separately.
+        reg_aft = -length + 15.0
+        fus = np.concatenate([tri.reshape(-1, 3) for name, tri in parts
+                              if name in ("fuselage", "fuselage_port")])
+        aft = fus[np.abs(fus[:, 2] - reg_aft) < 0.7]
+        arx = float(np.abs(aft[:, 0]).max())
+        acy = float((aft[:, 1].min() + aft[:, 1].max()) / 2)
+        ary = float((aft[:, 1].max() - aft[:, 1].min()) / 2)
+        panes = np.concatenate([tri.reshape(-1, 3) for name, tri in parts
+                                if name.startswith("cabin_window_") and "_main_" in name])
+        pane_top = float(panes[panes[:, 2] < -45, 1].max())
+        rx_, ry_, rtilt = tangent(arx, acy, ary, pane_top + gap + reg_cap / 2)
     return dict(member=member, x=tx, y=ty + offset, z=front, tilt=ttilt, c=cap / CAP_PER_CHARACTER_SIZE,
                 budget=budget, rx=rx_, ry=ry_ + offset, rz=reg_aft, rtilt=rtilt, rc=reg_cap / CAP_PER_CHARACTER_SIZE)
 

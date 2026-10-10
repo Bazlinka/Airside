@@ -222,6 +222,14 @@ namespace Airside.Simulation
             165f, 149f, 138f, 158f, 180f, 225f, 2150f, 11.0f, 9.5f,
             43000, 1800, 1800, 20f, 8f, 14f, 26.95f);
 
+        // Representative normal-weight visual planning, not certified dispatch limits.
+        public static readonly AircraftPerformanceProfile Boeing7478 = new(
+            175f, 155f, 143f, 165f, 185f, 230f, 2600f, 10f, 9f,
+            43000, 1600, 1800, 18f, 7f, 12f, 29.5f);
+        public static readonly AircraftPerformanceProfile AirbusA380800 = new(
+            175f, 150f, 138f, 160f, 180f, 225f, 2700f, 9.5f, 8.5f,
+            43000, 1500, 1700, 18f, 7f, 12f, 31.9f);
+
         public static AircraftPerformanceProfile For(AircraftType type)
         {
             if (type == null)
@@ -240,6 +248,8 @@ namespace Airside.Simulation
                 "B78X" => Boeing78710,
                 "A339" => AirbusA330900,
                 "B789" => Boeing7879,
+                "B748" => Boeing7478,
+                "A388" => AirbusA380800,
                 _ => Atr42
             };
         }

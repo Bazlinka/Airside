@@ -135,3 +135,5 @@ compile using Unity 6.3.23's Roslyn compiler and cached Unity references; one ex
 unreachable-code warning in AirsideAdelaideSurroundings. This is a compile check,
 not a Unity import or player run. No packaged build/full suite/native gameplay run
 was performed. First use requires a fresh stamped build containing this hook.
+
+With `--aircraft-type`, full-profile journeys now inject and follow that exact type (after granting its required base in the fresh QA fixture), rather than the opening Saab. Cold injected aircraft still retain the normal engine-start camera lock; use follow/overview in that initial feature session and journey cockpit frames after startup. No personal save or ordinary progression changes.

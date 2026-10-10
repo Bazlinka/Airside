@@ -41,7 +41,7 @@ namespace Airside.Presentation
                 "DH8D" => Dash8,
                 "A320" or "A21N" or "A223" => Airbus320,
                 "B738" or "B38M" or "E190" => NarrowJet,
-                "A359" or "A339" or "B789" or "B78X" => Widebody,
+                "A359" or "A339" or "B789" or "B78X" or "B748" or "A388" => Widebody,
                 _ => Atr42
             };
         }

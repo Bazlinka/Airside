@@ -183,7 +183,7 @@ namespace Airside.Presentation
             switch (type.Id)
             {
                 case "B738": case "B38M": return BoeingNarrowbodyProfile;
-                case "B789": case "B78X": return BoeingWidebodyProfile;
+                case "B789": case "B78X": case "B748": return BoeingWidebodyProfile;
                 default: return ForFamily(FamilyOf(type));
             }
         }
@@ -208,6 +208,8 @@ namespace Airside.Presentation
                 case "B738":
                 case "B38M":
                     return AircraftLightingFamily.Narrowbody;
+                case "B748":
+                case "A388":
                 case "A359":
                 case "A339":
                 case "B78X":

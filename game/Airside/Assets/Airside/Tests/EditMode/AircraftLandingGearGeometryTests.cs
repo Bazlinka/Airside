@@ -29,6 +29,41 @@ namespace Airside.Tests
             finally { Object.DestroyImmediate(leg); }
         }
 
+        [TestCase("B748", 18)]
+        [TestCase("A388", 22)]
+        public void FourEngineRigCarriesEveryFanAndMainTruck(string id, int wheelCount)
+        {
+            AircraftType.TryFromId(id, out var type);
+            var root = (Transform)typeof(AirsidePrototype).GetMethod("BuildAircraftForType", StaticPrivate)
+                .Invoke(null, new object[] { "Four-engine rig", type, Color.blue, null });
+            try
+            {
+                var parts = root.GetComponentsInChildren<Transform>();
+                var fans = 0; var struts = 0; var trucks = 0; var tyres = 0;
+                foreach (var part in parts)
+                {
+                    if (part.name is "Fan L" or "Fan R" or "Outer Fan L" or "Outer Fan R")
+                    {
+                        fans++;
+                        Assert.That(part.Find("FanDisc"), Is.Not.Null, part.name);
+                    }
+                    if (AirsideAircraftParts.IsGearStrut(part.name)) struts++;
+                    if (part.name.StartsWith("Truck ", StringComparison.Ordinal)) trucks++;
+                    if (part.name.StartsWith("Tire ", StringComparison.Ordinal))
+                    {
+                        tyres++;
+                        Assert.That(part.parent.name.StartsWith("Truck ", StringComparison.Ordinal)
+                            || part.parent.name == "Gear nose", Is.True, part.name);
+                    }
+                }
+                Assert.That(fans, Is.EqualTo(4));
+                Assert.That(struts, Is.EqualTo(5));
+                Assert.That(trucks, Is.EqualTo(4));
+                Assert.That(tyres, Is.EqualTo(wheelCount));
+            }
+            finally { Object.DestroyImmediate(root.gameObject); }
+        }
+
         [TestCase("ATR42")]
         [TestCase("SF34")]
         [TestCase("DH8D")]
@@ -42,6 +77,8 @@ namespace Airside.Tests
         [TestCase("A339")]
         [TestCase("B789")]
         [TestCase("B78X")]
+        [TestCase("B748")]
+        [TestCase("A388")]
         public void FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(string id)
         {
             Assert.That(AircraftType.TryFromId(id, out var aircraftType), Is.True);

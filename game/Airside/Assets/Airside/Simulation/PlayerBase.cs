@@ -74,6 +74,9 @@ namespace Airside.Simulation
             new("GATE-28L")
         };
 
+        // The International lease includes one code F line; its shared pier is reserved as usual.
+        private static readonly StableId[] CodeFGateStands = { new("GATE-18R") };
+
         public static PlayerBaseSpec For(PlayerBaseLevel level) => level switch
         {
             PlayerBaseLevel.ExpandedRegional => new PlayerBaseSpec(level,
@@ -136,6 +139,8 @@ namespace Airside.Simulation
                 return level >= PlayerBaseLevel.ExpandedRegional ? ExpandedRegionalStands : StarterRegionalStands;
             if (level < PlayerBaseLevel.JetGate)
                 return Array.Empty<StableId>();
+            if (AircraftCatalogue.CodeLetter(type) == 'F')
+                return level >= PlayerBaseLevel.International ? CodeFGateStands : Array.Empty<StableId>();
             if (AircraftCatalogue.IsWidebody(type))
                 return level >= PlayerBaseLevel.International ? WidebodyGateStands : Array.Empty<StableId>();
             return level >= PlayerBaseLevel.International ? InternationalGateStands : JetGateStands;
@@ -145,6 +150,9 @@ namespace Airside.Simulation
         {
             if (string.IsNullOrEmpty(stand.Value))
                 return false;
+            foreach (var candidate in CodeFGateStands)
+                if (level >= PlayerBaseLevel.International && candidate.Equals(stand))
+                    return true;
             foreach (var candidate in ExpandedRegionalStands)
                 if (level >= PlayerBaseLevel.ExpandedRegional && candidate.Equals(stand))
                     return true;
@@ -191,6 +199,9 @@ namespace Airside.Simulation
                 return !AdelaideGround.IsTerminalGate(stand);
             }
 
+            if (level >= PlayerBaseLevel.International && AircraftCatalogue.CodeLetter(type) == 'F')
+                return AirlineOperations.StandFits(type, stand); // shared code F overflow when the leased pier is occupied
+
             foreach (var candidate in DedicatedStands(level, type))
                 if (candidate.Equals(stand))
                     return true;
@@ -204,7 +215,7 @@ namespace Airside.Simulation
             return level switch
             {
                 PlayerBaseLevel.JetGate => regional + " · gates 27/29",
-                PlayerBaseLevel.International => regional + " · gates 27/29 · pier 28",
+                PlayerBaseLevel.International => regional + " · gates 27/29 · pier 28 · code F gate 18R",
                 _ => regional
             };
         }
@@ -257,7 +268,7 @@ namespace Airside.Simulation
 
         public static string UpgradeBenefitLine(PlayerBaseLevel level) => level switch
         {
-            PlayerBaseLevel.International => "pier 28 · local widebody maintenance · 30% faster turns",
+            PlayerBaseLevel.International => "pier 28 + gate 18R · local widebody maintenance · 30% faster turns",
             PlayerBaseLevel.JetGate => "gates 27/29 · local jet maintenance · 20% faster turns",
             PlayerBaseLevel.ExpandedRegional => "regional apron · local regional maintenance · 10% faster turns",
             _ => "50D · 50G · outsourced maintenance · baseline turns"

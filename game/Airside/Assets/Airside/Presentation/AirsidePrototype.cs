@@ -4299,6 +4299,8 @@ namespace Airside.Presentation
             public bool HasFans;
             public Transform FanLeft;
             public Transform FanRight;
+            public Transform OuterFanLeft;
+            public Transform OuterFanRight;
             /// <summary>Carries separate "Elevator" meshes, so the tailplane itself stays still.</summary>
             public bool HasSeparateElevators;
             public ControlSurfacePart[] ControlSurfaces;
@@ -4361,6 +4363,9 @@ namespace Airside.Presentation
                 var main = mainLeft != null && mainRight != null
                     ? (mainLeft.position + mainRight.position) * 0.5f
                     : (mainLeft != null ? mainLeft.position : mainRight.position);
+                var bodyMains = children.Where(t => t != null && (t.name == "Gear L body" || t.name == "Gear R body")).ToArray();
+                if (bodyMains.Length == 2) main = (main + (bodyMains[0].position + bodyMains[1].position) * .5f) * .5f;
+                parts.MainGearZMetres = aircraft.InverseTransformPoint(main).z;
                 var delta = parts.GearNose.position - main;
                 delta.y = 0f;
                 parts.WheelbaseMetres = delta.magnitude;
@@ -4453,12 +4458,12 @@ namespace Airside.Presentation
                 else if (AirsideAircraftParts.IsGearStrut(childName))
                 {
                     var role = childName == "Gear nose" ? GearRole.Nose
-                        : childName == "Gear L" ? GearRole.MainLeft
+                        : childName.StartsWith("Gear L", StringComparison.Ordinal) ? GearRole.MainLeft
                         : GearRole.MainRight;
                     lightsAndGear.Add(new LightGearPart(child, LightGearKind.GearStrut)
                     {
                         Role = role,
-                        Style = role == GearRole.Nose ? GearRetractStyle.Forward : mainGearStyle
+                        Style = role == GearRole.Nose || childName.EndsWith(" body", StringComparison.Ordinal) ? GearRetractStyle.Forward : mainGearStyle
                     });
                 }
                 else if (childName.StartsWith("Truck ", StringComparison.Ordinal))
@@ -4516,6 +4521,8 @@ namespace Airside.Presentation
                     parts.FanLeft = child;
                 else if (childName == "Fan R")
                     parts.FanRight = child;
+                else if (childName == "Outer Fan L") parts.OuterFanLeft = child;
+                else if (childName == "Outer Fan R") parts.OuterFanRight = child;
             }
 
             parts.ControlSurfaces = controlSurfaces.ToArray();

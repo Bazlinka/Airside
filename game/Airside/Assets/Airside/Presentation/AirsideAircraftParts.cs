@@ -81,7 +81,7 @@ namespace Airside.Presentation
         /// presentation names ("Gear nose", "Gear L", "Gear R").
         /// </summary>
         public static bool IsGearStrut(string partName) =>
-            partName is "Gear nose" or "Gear L" or "Gear R";
+            partName is "Gear nose" or "Gear L" or "Gear R" or "Gear L body" or "Gear R body";
 
         /// <summary>
         /// A gear door under either its presentation name ("Gear door L") or the kit name some doors keep

@@ -216,6 +216,11 @@ namespace Airside.Presentation
 
             RigMainGearTruck(aircraft, left, "L", names, children);
             RigMainGearTruck(aircraft, right, "R", names, children);
+            for (var i = 0; i < children.Length; i++)
+            {
+                if (names[i] == "Gear L body") RigMainGearTruck(aircraft, children[i], "L body", names, children);
+                else if (names[i] == "Gear R body") RigMainGearTruck(aircraft, children[i], "R body", names, children);
+            }
             AirsideNamedChildren.Forget(aircraft);
         }
 
@@ -235,6 +240,7 @@ namespace Airside.Presentation
                 if (children[i] == null || !AirsideAircraftParts.RollsInPlace(name)
                     || name.IndexOf(" " + side + " ", StringComparison.Ordinal) < 0)
                     continue;
+                if (children[i].parent != strut) continue;
                 wheelSet.Add(children[i]);
                 if (!name.StartsWith(tyrePrefix, StringComparison.Ordinal))
                     continue;

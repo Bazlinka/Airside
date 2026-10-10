@@ -94,7 +94,7 @@ namespace Airside.Tests
             foreach (var spec in AircraftCatalogue.All)
             {
                 var layout = AircraftIdentityMarkings.For(spec.Type);
-                Assert.That(layout.OperatorTiltDegrees, Is.InRange(20f, 50f), $"{spec.Name}: title lies on the upper skin");
+                Assert.That(layout.OperatorTiltDegrees, Is.InRange(20f, spec.Id == "A388" ? 60f : 50f), $"{spec.Name}: title lies on the upper skin");
                 Assert.That(layout.OperatorZ, Is.GreaterThan(layout.RegistrationZ), $"{spec.Name}: title forward, registration aft");
                 Assert.That(layout.OperatorZ - layout.TitleMaxLengthMetres, Is.GreaterThan(layout.RegistrationZ),
                     $"{spec.Name}: a full-length title stops before the registration");

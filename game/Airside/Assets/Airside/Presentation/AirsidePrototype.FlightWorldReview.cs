@@ -56,7 +56,8 @@ namespace Airside.Presentation
         {
             if (!FlightJourneyReviewActive) return;
             var subject = _operations.FleetOf(_operations.PlayerAirline)
-                .FirstOrDefault(a => CockpitAvailability.Supported(a.Type));
+                .FirstOrDefault(a => CockpitAvailability.Supported(a.Type)
+                    && (CockpitReviewType == null || a.Type.Id == CockpitReviewType));
             if (subject == null) throw new InvalidOperationException("Journey review needs a supported player aircraft.");
             _reviewJourneyAircraftId = subject.Registration;
             _reviewJourneyEpoch = _operations.Clock.SecondsAt(DateTime.UtcNow);

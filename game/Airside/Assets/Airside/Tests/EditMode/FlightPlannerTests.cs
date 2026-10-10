@@ -146,7 +146,7 @@ namespace Airside.Tests
             var melbourne = DestinationCatalogue.Australia.First(d => d.Code == "MEL");
             ops.ScheduleDeparture(atr, kingscote, new SimulationTime(600));
             ops.ScheduleDeparture(jet, melbourne, new SimulationTime(600));
-            clock.Set(new SimulationTime(Math.Max(650, DeparturePrep.ReadyAtSeconds(jet)) + 1));
+            clock.Set(new SimulationTime(System.Math.Max(650, DeparturePrep.ReadyAtSeconds(jet)) + 1));
             ops.Update();
 
             var atrBack = FlightPlanner.ExpectedBackAt(atr, 3600, clock.Now);

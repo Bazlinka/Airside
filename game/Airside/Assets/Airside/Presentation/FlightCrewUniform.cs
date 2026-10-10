@@ -17,10 +17,10 @@ namespace Airside.Presentation
                 {
                     var source = materials[i];
                     if (source == null) continue;
-                    var name = source.name;
-                    if (name.IndexOf("Suit", StringComparison.OrdinalIgnoreCase) >= 0)
+                    var name = source.name.Split('-').Last().Replace(" (Instance)", "");
+                    if (name.Equals("Suit", StringComparison.OrdinalIgnoreCase))
                         materials[i] = AirsideMaterialLibrary.CreateShared(pilot ? Navy : new Color(.09f,.22f,.31f), AirsideMaterialLibrary.SurfaceKind.Default);
-                    else if (name.IndexOf("Tie", StringComparison.OrdinalIgnoreCase) >= 0)
+                    else if (name.Equals("Tie", StringComparison.OrdinalIgnoreCase))
                         materials[i] = AirsideMaterialLibrary.CreateShared(pilot ? Navy : new Color(.65f,.25f,.15f), AirsideMaterialLibrary.SurfaceKind.Default);
                     else if (name.EndsWith("White", StringComparison.OrdinalIgnoreCase))
                         materials[i] = AirsideMaterialLibrary.CreateShared(new Color(.93f,.94f,.95f), AirsideMaterialLibrary.SurfaceKind.Default);

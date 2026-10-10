@@ -409,6 +409,5 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/WeatherAuditPolicyTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/WeatherCoverageTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/WeatherTests.cs" />
-    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ZzCareerProbeTests.cs" />
   </ItemGroup>
 </Project>

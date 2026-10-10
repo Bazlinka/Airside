@@ -73,6 +73,18 @@ realistic overheads. Bailey left the choice to the team ("up to you"), and this 
 - **Not done:** explicit borrow and repay buttons (the commands exist; the HUD has no control yet), a native look at the new card text, and the
   `CareerBot` does not borrow, so it plays the cash-only economy.
 
+## Step 4 landed (11 Oct 2026): fuel price walk and bank buttons (no save change)
+
+- `Simulation/FuelPrice.cs`: a pure, seeded function of the Adelaide day (smooth interpolation between random 9-day knots) around
+  `BaselineFuelPerKg`. Swing +/-15%; Demanding +/-40% (the roadmap's "Hard" is the game's Demanding). Nothing is persisted, so catch-up and replay agree.
+- `AirlineOperations.DispatchCost(type, km, departAt)` prices fuel at the **departure** day; the two-argument form uses today. Booking, rebooking
+  and cancelling (Adelaide and outstation) use the booked departure (`ScheduledDeparture.PublishedAt`), so a refund is always what was paid.
+  Forecast revenue and the planner's profit estimate still use the baseline fuel price for the forecast line only.
+- Stats workspace: BORROW 250K / REPAY 250K buttons beside EXPAND BASE (hidden if the left column is under 460 px) and a fuel-price line.
+  The commands clamp, so repeated clicks are safe. **Not seen in Unity**: layout and wording are unverified natively.
+- Tests: `FuelPriceTests` (3); `AirlineCareerTests` now compute the expected cost with `ops.DispatchCost`.
+- Still open: `CareerBot` does not borrow; a competent-bot pacing rerun (see Step 2 open item); competitor airlines (roadmap phase 2).
+
 ### Real `CareerBot` comparison (Standard difficulty, 150 open hours, seed 1; old economy = `main` before this change)
 
 | | Regional | Domestic | International | Fleet at 150 h | Cash at 150 h |

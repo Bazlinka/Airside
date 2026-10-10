@@ -264,9 +264,10 @@ namespace Airside.Simulation
 
             if (aircraft.Airline.IsPlayer)
             {
-                var cost = DispatchCost(aircraft.Type, DistanceKm(destination));
+                var cost = DispatchCost(aircraft.Type, DistanceKm(destination), departAt);
                 var alreadyPaid = aircraft.Scheduled.HasValue
-                    ? DispatchCost(aircraft.Type, DistanceKm(aircraft.Scheduled.Value.Destination))
+                    ? DispatchCost(aircraft.Type, DistanceKm(aircraft.Scheduled.Value.Destination),
+                        aircraft.Scheduled.Value.PublishedAt)
                     : 0;
                 var recoveryCredit = CareerState.Funds + alreadyPaid < cost
                     && alreadyPaid == 0
@@ -307,7 +308,7 @@ namespace Airside.Simulation
 
             if (aircraft.Airline.IsPlayer && aircraft.Scheduled.HasValue)
                 CareerState.RefundDispatch(DispatchCost(aircraft.Type,
-                    DistanceKm(aircraft.Scheduled.Value.Destination)));
+                    DistanceKm(aircraft.Scheduled.Value.Destination), aircraft.Scheduled.Value.PublishedAt));
 
             // ADR 0053: a broken commitment against the active career contract costs
             // reliability — only when the cancelled flight would actually have counted

@@ -206,7 +206,8 @@ namespace Airside.Presentation
 
             var dispatch = operations.DispatchCost(type, km);
             var alreadyPaid = aircraft.Scheduled.HasValue
-                ? operations.DispatchCost(type, operations.DistanceKm(aircraft.Scheduled.Value.Destination))
+                ? operations.DispatchCost(type, operations.DistanceKm(aircraft.Scheduled.Value.Destination),
+                    aircraft.Scheduled.Value.PublishedAt)
                 : 0;
             var changeCost = dispatch - alreadyPaid;
             var forecast = operations.Forecast(operations.Home, destination, aircraft);

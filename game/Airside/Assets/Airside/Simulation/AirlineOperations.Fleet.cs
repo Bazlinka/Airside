@@ -209,7 +209,7 @@ namespace Airside.Simulation
                 return CommandResult.Refused("International flights need the International tier.");
             if (departAt.CompareTo(_processedTo) < 0)
                 return CommandResult.Refused("Departure time is in the past.");
-            var cost = DispatchCost(aircraft.Type, km);
+            var cost = DispatchCost(aircraft.Type, km, departAt);
             if (!CareerState.TryChargeDispatch(cost))
                 return CommandResult.Refused($"This flight costs ${cost:N0}. You have ${CareerState.Funds:N0}.");
             var duration = 2 * LegTiming.AirborneSeconds(km, aircraft.Type) + 45 * 60;
@@ -228,7 +228,8 @@ namespace Airside.Simulation
             if (!DestinationCatalogue.TryFind(aircraft.BaseCode, out var origin)
                 || !DestinationCatalogue.TryFind(aircraft.DestinationCode, out var destination))
                 return CommandResult.Refused("Unknown network route.");
-            CareerState.RefundDispatch(DispatchCost(aircraft.Type, origin.DistanceKmTo(destination)));
+            CareerState.RefundDispatch(DispatchCost(aircraft.Type, origin.DistanceKmTo(destination),
+                new SimulationTime(aircraft.DepartAtSeconds)));
             if (CareerState.ActiveContract is { } active && CareerState.TryFindDefinition(active.DefinitionId, out var contract)
                 && contract.MatchesAircraft(aircraft.Type, false) && contract.MatchesRoute(aircraft.BaseCode, aircraft.DestinationCode))
                 CareerState.PenalizeCancellation(contract.Id, contract.ReliabilityLossOnCancel);

@@ -520,12 +520,24 @@ namespace Airside.Simulation
             CanReach(aircraft, destination)
             && (!aircraft.Airline.IsPlayer || RouteAccess.Allows(aircraft.Type, destination));
 
-        /// <summary>What dispatching this leg costs the player, under the airline's difficulty (ADR 0123).</summary>
-        public long DispatchCost(AircraftType type, double km)
+        /// <summary>What dispatching this leg costs the player today, under the airline's difficulty (ADR 0123).</summary>
+        public long DispatchCost(AircraftType type, double km) => DispatchCost(type, km, _processedTo);
+
+        /// <summary>
+        /// The cost for a flight departing at <paramref name="departAt"/>: the fuel price is that Adelaide day's
+        /// (<see cref="FuelPrice"/>), so booking and a later cancel of the same flight agree.
+        /// </summary>
+        public long DispatchCost(AircraftType type, double km, SimulationTime departAt)
         {
-            var cost = FlightEconomics.DispatchCost(type, km);
-            return CareerState == null ? cost : CareerState.DifficultyProfile.ScaleCost(cost);
+            if (CareerState == null)
+                return FlightEconomics.DispatchCost(type, km);
+            var fuel = FuelPrice.PerKg(DemandEvents.DayOf(departAt, Clock), CareerState.Difficulty);
+            return CareerState.DifficultyProfile.ScaleCost(FlightEconomics.DispatchCost(type, km, fuel));
         }
+
+        /// <summary>Today's fuel price relative to the baseline (1.0), or 1.0 with no career.</summary>
+        public double FuelPriceRatio => CareerState == null
+            ? 1.0 : FuelPrice.Ratio(DemandEvents.DayOf(_processedTo, Clock), CareerState.Difficulty);
 
         /// <summary>
         /// The first-flight coaching card (ADR 0123). Chosen at setup; experienced players can turn it

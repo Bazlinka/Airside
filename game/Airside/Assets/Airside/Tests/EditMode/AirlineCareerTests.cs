@@ -167,7 +167,7 @@ namespace Airside.Tests
 
                 Assert.That(plane.CompletedTrips, Is.EqualTo(rotation));
                 var fulfilled = rotation == definition.RequiredRotations;
-                var cost = FlightEconomics.DispatchCost(plane.Type, ops.DistanceKm(kingscote));
+                var cost = ops.DispatchCost(plane.Type, ops.DistanceKm(kingscote));
                 var pay = RouteForecast.For(ops.Home, kingscote, plane.Type).Revenue;
                 var expectedFunds = AirlineCareerState.StartingFunds
                     + (long)rotation * (pay - cost + definition.PaymentPerRotation)
@@ -294,7 +294,7 @@ namespace Airside.Tests
             // Port Lincoln is within the ATR's range but is not the accepted KGC contract's route.
             FlyRoundTrip(clock, ops, plane, Code("PLO"), 600, AirlineOperations.AdelaideRegionalBays[1]);
 
-            var cost = FlightEconomics.DispatchCost(plane.Type, ops.DistanceKm(Code("PLO")));
+            var cost = ops.DispatchCost(plane.Type, ops.DistanceKm(Code("PLO")));
             var pay = RouteForecast.For(ops.Home, Code("PLO"), plane.Type).Revenue;
             Assert.That(ops.CareerState.Funds, Is.EqualTo(AirlineCareerState.StartingFunds - cost + pay),
                 "an unmatched route still pays the flight, just not the contract bonus");
@@ -335,7 +335,7 @@ namespace Airside.Tests
         {
             var (_, ops, plane) = PlayerOnly();
             var kingscote = Code("KGC");
-            var cost = FlightEconomics.DispatchCost(plane.Type, ops.DistanceKm(kingscote));
+            var cost = ops.DispatchCost(plane.Type, ops.DistanceKm(kingscote));
             Assert.That(ops.ScheduleDeparture(plane, kingscote, new SimulationTime(600)).Accepted, Is.True);
             Assert.That(ops.CareerState.Funds, Is.EqualTo(AirlineCareerState.StartingFunds - cost));
 
@@ -393,7 +393,7 @@ namespace Airside.Tests
             var departAt = 600L;
             FlyRoundTrip(clock, ops, dash, melbourne, departAt, AirlineOperations.AdelaideRegionalBays[2]);
 
-            var cost = FlightEconomics.DispatchCost(dash.Type, ops.DistanceKm(melbourne));
+            var cost = ops.DispatchCost(dash.Type, ops.DistanceKm(melbourne));
             var pay = RouteForecast.For(ops.Home, melbourne, dash.Type).Revenue;
             Assert.That(ops.CareerState.Funds, Is.EqualTo(50_000 * FlightCostModel.LegacySaveMoneyScale - AircraftAcquisition.Dash8Q400.Price - cost + pay
                 + definition.PaymentPerRotation));
@@ -547,7 +547,7 @@ namespace Airside.Tests
             var kingscote = Code("KGC");
             FlyRoundTrip(clock, ops, plane, kingscote, 600, AirlineOperations.AdelaideRegionalBays[1]);
 
-            var cost = FlightEconomics.DispatchCost(plane.Type, ops.DistanceKm(kingscote));
+            var cost = ops.DispatchCost(plane.Type, ops.DistanceKm(kingscote));
             var pay = RouteForecast.For(ops.Home, kingscote, plane.Type).Revenue;
             var scaledPay = (long)Math.Round(pay * 0.8);
             Assert.That(ops.CareerState.Funds,

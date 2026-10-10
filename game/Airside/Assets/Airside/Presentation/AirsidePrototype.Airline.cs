@@ -2879,6 +2879,23 @@ namespace Airside.Presentation
                     PlayUiClick();
                     return;
                 }
+                case HudAction.BorrowStep:
+                case HudAction.RepayStep:
+                {
+                    var step = StatsWorkspaceModel.LoanStep;
+                    var result = action == HudAction.BorrowStep ? _operations.TakeLoan(step) : _operations.RepayLoan(step);
+                    if (result.Accepted)
+                    {
+                        ShowToast(action == HudAction.BorrowStep
+                            ? $"Borrowed up to ${step:N0}. You owe ${_operations.CareerState.Loan:N0}."
+                            : $"Repaid up to ${step:N0}. You owe ${_operations.CareerState.Loan:N0}.");
+                        SaveAirline();
+                    }
+                    else
+                        ShowToast(result.Reason);
+                    PlayUiClick();
+                    return;
+                }
                 case HudAction.PlanFlight:
                     ScheduleFromPlanner();
                     return;

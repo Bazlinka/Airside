@@ -264,6 +264,8 @@ namespace Airside.Presentation
         public const string StartCheck = "check";
         public const string ToggleFreighter = "freighter";
         public const string UpgradeBase = "base:upgrade";
+        public const string BorrowStep = "bank:borrow";
+        public const string RepayStep = "bank:repay";
         public const string CareerRoadmap = "career:roadmap";
         public const string ContractMarket = "career:offers";
         public const string NextOfferPage = "contract:page";

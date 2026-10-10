@@ -401,6 +401,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TerminalPeopleTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TerrainFieldTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TowerAndStandChoiceTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TurnaroundCrewWorkTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/VisualBaselineViewsTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/WeatherAppearanceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/WeatherAuditPolicyTests.cs" />

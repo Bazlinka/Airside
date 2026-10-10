@@ -1,0 +1,90 @@
+{
+  "protocol": 1,
+  "steps": [
+    {
+      "id": "clear",
+      "action": "weather",
+      "value": "Clear",
+      "capture": false,
+      "settleSeconds": 15
+    },
+    {
+      "id": "east-low",
+      "action": "camera",
+      "value": "8,70,2400",
+      "capture": false,
+      "settleSeconds": 2
+    },
+    {
+      "id": "sunrise-low",
+      "action": "time",
+      "value": "07:00",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "west-dawn",
+      "action": "camera",
+      "value": "8,250,2400",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "sunset-low",
+      "action": "time",
+      "value": "19:15",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "sunset-upper-sky",
+      "action": "camera",
+      "value": "22,250,2400",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "east-evening",
+      "action": "camera",
+      "value": "8,70,2400",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "tower",
+      "action": "tower",
+      "value": "",
+      "capture": false,
+      "settleSeconds": 2
+    },
+    {
+      "id": "tower-horizon",
+      "action": "tower-look",
+      "value": "5,250",
+      "capture": false,
+      "settleSeconds": 2
+    },
+    {
+      "id": "tower-clear",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "tower-overcast",
+      "action": "weather",
+      "value": "Overcast",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "tower-fog",
+      "action": "weather",
+      "value": "Fog",
+      "capture": true,
+      "settleSeconds": 15
+    }
+  ],
+  "expectedCommit": "bb4a17eae89b00250c5b500f714cecda2ff06d6d"
+}

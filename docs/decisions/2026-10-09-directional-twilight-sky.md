@@ -9,3 +9,8 @@ The existing celestial elevation/clock and observer weather determine colours co
 Affected: Presentation sky/day cycle, atmosphere haze, shader inclusion. Existing sun/moon geometry, star fading, terrain, weather geometry, night-brightness settings and operational rules remain. Save migration: none.
 
 This extends ADR 0143's single atmosphere with spatial sky variation; fog remains its weather-aware horizon colour. This is an artistic approximation, not physical atmospheric scattering. GPU timings, all flight altitudes and every seasonal date are not established by the focused review.
+
+Native review refinement (#773): narrow the amber low band, soften dawn to peach,
+keep blue hour steel-blue, and add a restrained opposing rose band above the cool
+horizon. This extends the same analytic material; no texture or new system. The
+band is an artistic earth-shadow approximation, not astronomical scattering.

@@ -146,6 +146,10 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Add larger working ground teams; baggage carrying workload and equipment clearing gate player turnaround readiness.
+
+- 2026-10-09 — #773: softer peach dawn, restrained sunset amber, opposing rose twilight band and cooler blue-hour sky.
+
 - 2026-10-09 — #760: add warm house windows, mapped urban street lighting and built-up district lights at dusk/night.
 
 - Fix jagged star-shaped cabin windows where livery bands crossed the window row (A350, 787-9, others): paint is now cut by each pane's outline (`scripts/cut-livery-windows.py`); Dash 8 title table refreshed.

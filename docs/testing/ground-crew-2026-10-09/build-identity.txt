@@ -1,0 +1,7 @@
+commit=bbe40abd
+commitFull=bbe40abd9256ce3275665f17a13beb6c4dbf2410
+branch=codex/ground-crew-20261009
+subject=Clear hold attendants and keep safety cones beside workers
+committedAt=2026-10-09T22:49:56+10:30
+dirty=false
+stampedAt=2026-10-09T12:19:59Z

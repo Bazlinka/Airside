@@ -11,6 +11,17 @@ deposits (`LeaseTerms`); opening cash A$1.5M; save v24 scales old money x35 once
 HUD wording, native check of wide money in the HUD (unverified; no Unity run). Plan: `docs/plans/economy-competitors-walkable-roadmap.md`;
 decision/evidence: `docs/decisions/2026-10-09-economy-v2-real-dollar-scale.md`. Main CI is red on 10 older, unrelated headless tests.
 
+**Working ground teams (9 Oct, Codex, #774 / PR #776):** airport-provided larger service teams;
+shared bag allowance and physical carrying trips determine minimum player baggage
+preparation, including equipment setup and clearing. Reuses shipped characters/tools.
+Fuel/catering reserve setup/clear windows within existing budgets. Ambient airlines
+receive more visible workers; their scheduling is unchanged. No hiring/economy/save-schema
+changes. 160 focused/related checks pass, final native service frames inspected;
+clean universal bbe40abd build, nine booking/save/view actions and 40× ADL–KGC
+round trip pass, zero runtime errors. Whole subsequently merged main not rebuilt.
+Decision: `2026-10-09-airport-ground-teams`; evidence: `docs/testing/ground-crew-2026-10-09.md`.
+
+
 **Landing gear improvements (9 Oct, Codex, #757):** actual top-attachment pivots, one retained
 gear timeline, clear door/leg sequencing, centred nose steering during fold, enclosed
 stowed wheel envelopes and widebody bogie beams carried with their axles/wheels.
@@ -31,10 +42,14 @@ Final clean universal Mac build and nine native steps pass, zero runtime errors;
 day/dusk/night and horizon frames inspected. Focused 40× Whyalla arrival/origin
 probe has no runtime errors; regional close windows/GPU cost remain unverified; `docs/testing/city-town-lights-2026-10-09.md`.
 
-**Directional twilight sky (9 Oct, Codex, #758):** cool zenith/horizon gradients,
+**Directional twilight sky (9 Oct, Codex, #758 / #773):** cool zenith/horizon gradients,
 sun-facing amber/rose dawn and dusk, blue-hour evenings; broad orange fog reduced.
 Existing celestial clock, weather/altitude, stars, night readability and saves retained.
-Native clear dawn/day/sunset/evening/night and overcast/fog review pending on pushed revision.
+Refinement narrows amber, softens dawn, adds an opposing rose band and cools blue hour.
+Clean universal bb4a17ea build and 31 native steps pass, zero runtime errors; before/after
+cycle, follow, opposite horizon and tower-weather frames inspected. Seasonal extremes/GPU
+performance unverified; combined subsequent gear main not rebuilt.
+Evidence: `docs/testing/sky-refinement-2026-10-09/README.md`.
 Decision: `2026-10-09-directional-twilight-sky`.
 
 **Tower cab and rain motion (9 Oct, Codex, #756):** original interior ceiling, window
@@ -48,7 +63,9 @@ pass. Synthetic 220 m/s rain probe reaches 216.7 m/s (previously 90); real fligh
 crossing and control hit-testing unverified.
 Decision/evidence: `docs/testing/tower-rain-2026-10-09/README.md`.
 
-**Next:** Bailey can use the validated local build for personal tower/rain playtesting.
+**Next:** ground-team implementation complete. Bailey can use the isolated stamped ground-team
+bbe40abd build for personal playtesting; it predates the subsequent sky/economy merge.
+The separate sky bb4a17ea build/evidence retains the limits recorded above.
 Other active state and prior verification limits are preserved in
 `docs/history/game-handoff-before-tower-rain-2026-10-09.md`.
 Standing policy: agents choose necessary focused runtime checks; broad suites/soaks on request.

@@ -3,7 +3,7 @@ using Airside.Domain;
 
 namespace Airside.Simulation
 {
-    /// <summary>Fuel → catering → baggage → boarding before a player pushback (ADR 0056 / 0093).</summary>
+    /// <summary>Fuel → catering → workload-based baggage → boarding before a player pushback (ADR 0056 / 0093).</summary>
     public enum DeparturePrepStage
     {
         Idle,
@@ -77,16 +77,16 @@ namespace Airside.Simulation
         public const long BoardingSeconds = 120;
 
         public static long TotalSeconds(AircraftType type) =>
-            Scale(type, FuelSeconds, PlayerBaseLevel.Starter)
-            + Scale(type, CateringSeconds, PlayerBaseLevel.Starter)
-            + Scale(type, BaggageSeconds, PlayerBaseLevel.Starter)
-            + Scale(type, BoardingSeconds, PlayerBaseLevel.Starter);
+            StageSecondsFor(type, DeparturePrepStage.Fuel, PlayerBaseLevel.Starter)
+            + StageSecondsFor(type, DeparturePrepStage.Catering, PlayerBaseLevel.Starter)
+            + StageSecondsFor(type, DeparturePrepStage.Baggage, PlayerBaseLevel.Starter)
+            + StageSecondsFor(type, DeparturePrepStage.Boarding, PlayerBaseLevel.Starter);
 
         public static long TotalSeconds(AircraftType type, PlayerBaseLevel baseLevel) =>
-            Scale(type, FuelSeconds, baseLevel)
-            + Scale(type, CateringSeconds, baseLevel)
-            + Scale(type, BaggageSeconds, baseLevel)
-            + Scale(type, BoardingSeconds, baseLevel);
+            StageSecondsFor(type, DeparturePrepStage.Fuel, baseLevel)
+            + StageSecondsFor(type, DeparturePrepStage.Catering, baseLevel)
+            + StageSecondsFor(type, DeparturePrepStage.Baggage, baseLevel)
+            + StageSecondsFor(type, DeparturePrepStage.Boarding, baseLevel);
 
         /// <summary>Planner lead: prep plus the engine-start window, whichever is longer.</summary>
         public static long LeadSeconds(AircraftType type) =>
@@ -133,10 +133,10 @@ namespace Airside.Simulation
                 return new DeparturePrepStatus(DeparturePrepStage.Idle, 0, false, "Waiting to start",
                     0, 0, 0, 0, -elapsed);
 
-            var fuel = Scale(aircraft.Type, FuelSeconds, baseLevel);
-            var catering = Scale(aircraft.Type, CateringSeconds, baseLevel);
-            var baggage = Scale(aircraft.Type, BaggageSeconds, baseLevel);
-            var boarding = Scale(aircraft.Type, BoardingSeconds, baseLevel);
+            var fuel = StageSecondsFor(aircraft.Type, DeparturePrepStage.Fuel, baseLevel);
+            var catering = StageSecondsFor(aircraft.Type, DeparturePrepStage.Catering, baseLevel);
+            var baggage = StageSecondsFor(aircraft.Type, DeparturePrepStage.Baggage, baseLevel);
+            var boarding = StageSecondsFor(aircraft.Type, DeparturePrepStage.Boarding, baseLevel);
 
             var fuelProgress = Progress(elapsed, fuel);
             var afterFuel = elapsed - fuel;
@@ -186,9 +186,9 @@ namespace Airside.Simulation
                 return double.MaxValue;
 
             var elapsed = (double)(now.ElapsedSeconds - StartSeconds(aircraft, now, baseLevel));
-            var fuel = Scale(aircraft.Type, FuelSeconds, baseLevel);
-            var catering = Scale(aircraft.Type, CateringSeconds, baseLevel);
-            var baggage = Scale(aircraft.Type, BaggageSeconds, baseLevel);
+            var fuel = StageSecondsFor(aircraft.Type, DeparturePrepStage.Fuel, baseLevel);
+            var catering = StageSecondsFor(aircraft.Type, DeparturePrepStage.Catering, baseLevel);
+            var baggage = StageSecondsFor(aircraft.Type, DeparturePrepStage.Baggage, baseLevel);
 
             double startsAt, endsAt;
             switch (stage)
@@ -249,14 +249,15 @@ namespace Airside.Simulation
         {
             DeparturePrepStage.Fuel => Scale(type, FuelSeconds, baseLevel),
             DeparturePrepStage.Catering => Scale(type, CateringSeconds, baseLevel),
-            DeparturePrepStage.Baggage => Scale(type, BaggageSeconds, baseLevel),
+            DeparturePrepStage.Baggage => type != null && type.IsRotorcraft ? Scale(type, BaggageSeconds, baseLevel)
+                : Math.Max(Scale(type, BaggageSeconds, baseLevel), TurnaroundCrewWork.BaggageSeconds(type)),
             DeparturePrepStage.Boarding => Scale(type, BoardingSeconds, baseLevel),
             _ => 0
         };
 
         /// <summary>How long the Boarding stage takes for this type at this base level.</summary>
         public static long BoardingSecondsFor(AircraftType type, PlayerBaseLevel baseLevel) =>
-            Scale(type, BoardingSeconds, baseLevel);
+            StageSecondsFor(type, DeparturePrepStage.Boarding, baseLevel);
 
         private static long Scale(AircraftType type, long seconds, PlayerBaseLevel baseLevel)
         {

@@ -166,8 +166,9 @@ namespace Airside.Presentation
                     Wand(kit.Right);
                     break;
                 case RampTask.PlaceSafetyEquipment:
-                    // Carried by its tip, the way cones are picked up.
-                    Cone(kit.RightHanging);
+                case RampTask.EquipmentRunner:
+                    // Carried by its tip and hidden after placement.
+                    Cone(kit.Items[CarriedItem.Cone] = Child(kit.RightHanging, "Safety cone"));
                     break;
                 case RampTask.FuelCoupling:
                     Nozzle(kit.Items[CarriedItem.Nozzle] = Child(kit.Right, "Nozzle"));
@@ -346,6 +347,9 @@ namespace Airside.Presentation
             var root = Child(parent, $"{kind} (loose)");
             switch (kind)
             {
+                case CarriedItem.Cone:
+                    Cone(Child(root, "Cone", new Vector3(0f, 0.55f, 0f)));
+                    break;
                 case CarriedItem.Bag:
                     Suitcase(Child(root, "Bag", new Vector3(0f, 0.6f, 0f)), BagColours[variant % BagColours.Length], 0.56f);
                     break;

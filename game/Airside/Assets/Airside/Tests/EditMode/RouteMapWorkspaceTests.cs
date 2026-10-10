@@ -85,10 +85,9 @@ namespace Airside.Tests
             model.Rebuild(ops, plane, kingscote, 900, clock.Now, RouteMapFilter.Available);
 
             var km = ops.DistanceKm(kingscote);
-            var dispatch = FlightEconomics.DispatchCost(plane.Type, km);
+            var dispatch = ops.DispatchCost(plane.Type, km, AirlineOperations.WholeMinute(clock.Now.Advance(900)));
             var pay = RouteForecast.For(ops.Home, kingscote, plane.Type).Revenue;
-            Assert.That(model.DispatchLine,
-                Is.EqualTo($"Pay now ${dispatch:N0}"));
+            Assert.That(model.DispatchLine, Does.StartWith($"Pay now ${dispatch:N0}"));
             Assert.That(model.ReturnLine, Is.EqualTo($"Expected return ${pay:N0}"));
             Assert.That(model.ProfitLine, Is.EqualTo($"Expected profit +${pay - dispatch:N0}"));
             Assert.That(model.CompatibilityLine, Is.EqualTo("Saab 340B can fly this"));

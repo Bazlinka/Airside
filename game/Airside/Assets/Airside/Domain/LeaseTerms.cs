@@ -33,6 +33,8 @@ namespace Airside.Domain
                 "B789" => 170_000_000,
                 "B78X" => 190_000_000,
                 "A359" => 200_000_000,
+                "B748" => 180_000_000,
+                "A388" => 150_000_000,
                 _ => throw new ArgumentException($"{type.Id} has no market value.", nameof(type))
             };
         }

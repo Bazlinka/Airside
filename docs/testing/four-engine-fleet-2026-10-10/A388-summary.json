@@ -1,0 +1,57 @@
+{
+  "protocol": 1,
+  "commit": "46ff53f114dec91acd980dafcfbdf5e6d335b18a",
+  "profile": "full",
+  "status": "passed",
+  "features": [
+    "camera",
+    "follow",
+    "overview",
+    "save",
+    "time"
+  ],
+  "issue": "",
+  "visualQuality": "requires agent image inspection",
+  "performance": "unverified",
+  "scenarios": [
+    {
+      "name": "features",
+      "status": "passed",
+      "steps": 9,
+      "realSeconds": 25.41
+    },
+    {
+      "name": "round-trip",
+      "status": "passed",
+      "realSeconds": 265.66,
+      "rate": 40,
+      "frames": [
+        "0199.7-Inbound-final.png",
+        "0256.1-AwaitingStand.png",
+        "0257.5-completed-overview.png",
+        "0187.1-Inbound.png",
+        "0244.0-Landing.png",
+        "0110.9-Outbound-rollout.png",
+        "0126.9-AtDestination.png",
+        "0065.2-TakingOff.png",
+        "0244.2-GoAround.png",
+        "0171.9-AtDestination.png",
+        "0052.6-HoldingShort.png",
+        "0214.7-Inbound-final.png",
+        "0256.3-TaxiIn.png",
+        "0141.9-AtDestination.png",
+        "0111.9-AtDestination.png",
+        "0040.6-TaxiOut.png",
+        "0107.4-Outbound-approach.png",
+        "0238.0-HoldingForLanding.png",
+        "0084.0-Outbound.png",
+        "0250.2-Landing.png",
+        "0069.0-Outbound.png",
+        "0172.1-Inbound.png",
+        "0099.1-Outbound.png",
+        "0156.9-AtDestination.png",
+        "0229.7-Inbound-final.png"
+      ]
+    }
+  ]
+}

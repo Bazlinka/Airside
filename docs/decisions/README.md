@@ -347,3 +347,4 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-09 | [Tower cab and rain motion](2026-10-09-tower-cab-and-rain-motion.md) | Accepted |
 | 2026-10-09 | [Weather delay is not scored against punctuality](2026-10-09-weather-delay-not-scored.md) | Accepted — Bailey's request to improve weather consequences across the |
 | 2026-10-09 | [Welcome weather isolation and small comfort fixes](2026-10-09-welcome-weather-isolation.md) | Accepted |
+| 2026-10-10 | [Passenger 747-8 and A380-800 support](2026-10-10-four-engine-fleet.md) | Accepted for implementation at Bailey's request |

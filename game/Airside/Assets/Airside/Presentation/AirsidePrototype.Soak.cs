@@ -132,6 +132,15 @@ namespace Airside.Presentation
                 return;
             }
 
+            // Opt-in fresh-save fixture: owned injected types need their operational base
+            // on return. No purchase, progression or personal save is changed by this QA seed.
+            if (_operations.CareerState != null && !PlayerBase.Supports(_operations.CareerState.BaseLevel, type))
+            {
+                var fixture = AirlineSave.Capture(_operations);
+                fixture.PlayerBaseLevel = PlayerBase.RequiredLevel(type).ToString();
+                _operations = AirlineSave.Restore(fixture, _clock);
+                player = _operations.PlayerAirline;
+            }
             var aircraft = _operations.AddAircraft(player, "VH-TS1", type, stand.Value);
             var toIndex = Array.IndexOf(args, "-airsideSoakAddTo");
             if (toIndex >= 0 && toIndex + 1 < args.Length
@@ -538,6 +547,7 @@ namespace Airside.Presentation
                 InitializeFlightJourneyReview(args);
                 if (!InitializeAgentGameplay()) return;
                 StartAirline("Soak Air");
+                TryAddSoakAircraft(args);
                 BeginFlightJourneyReviewClock();
                 if (_agentGameplayActive) StartCoroutine(RunAgentGameplay());
                 ApplySoakRenderIsolation(args);
@@ -545,7 +555,6 @@ namespace Airside.Presentation
                 var followIndex = Array.IndexOf(args, ReviewAircraftFlag);
                 _reviewAircraftId = followIndex >= 0 && followIndex + 1 < args.Length
                     ? args[followIndex + 1] : null;
-                TryAddSoakAircraft(args);
                 if (Array.IndexOf(args, ReviewFreighterFlag) >= 0)
                 {
                     _reviewFreighterRequired = true;
@@ -648,7 +657,7 @@ namespace Airside.Presentation
                 }
                 else if (aircraft.State == FleetState.AwaitingStand)
                 {
-                    foreach (var stand in _operations.FreeStandsFor(aircraft.Type))
+                    foreach (var stand in _operations.FreeStandsFor(aircraft.Type, aircraft))
                     {
                         if (_operations.AssignStand(aircraft, stand).Accepted)
                             break;

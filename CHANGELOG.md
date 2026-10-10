@@ -1,5 +1,9 @@
 # Changelog
 
+- 2026-10-11 — #778: fit the A380 wordmark above its double-deck windows and place the 747-8 registration on the aft main-deck skin.
+
+- 2026-10-10 — #778: add passenger 747-8/A380-800 models, lease/flight/audio profiles, code F return-stand reservations and Super wake; preserve saves.
+
 - 2026-10-09 — Economy v2 step 1: flight money from FlightCostModel in real dollars, aircraft prices are lease deposits, checks bill the maintenance reserve, save v24 scales old money x35; CareerBot pacing at parity.
 - 2026-10-09 — Economy v2: pure real-dollar FlightCostModel (sourced Adelaide/Airservices fees, leases, loan caps) with 12 tests and a 150-hour pacing simulation; not yet wired into the live game.
 - 2026-10-09 — ADR: Economy v2 decision (real-dollar scale, real fees, v23->v24 save migration plan, x1000 funds); data file gains fares/values findings. Docs only.

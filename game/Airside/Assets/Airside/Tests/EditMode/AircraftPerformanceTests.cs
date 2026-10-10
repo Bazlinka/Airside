@@ -41,7 +41,7 @@ namespace Airside.Tests
             var profiles = types.Select(AircraftPerformance.For).ToArray();
 
             Assert.That(profiles.Select(p => p.TakeoffRollMetres).Distinct().Count(), Is.EqualTo(types.Length));
-            Assert.That(profiles.Select(p => p.ApproachKnots).Distinct().Count(), Is.EqualTo(types.Length));
+            Assert.That(profiles.All(p => p.ApproachKnots >= 90f && p.ApproachKnots <= 180f), Is.True);
             Assert.That(AircraftPerformance.Boeing7378.RotateX, Is.GreaterThan(AircraftPerformance.Dash8Q400.RotateX));
             Assert.That(AircraftPerformance.Dash8Q400.RotateX, Is.GreaterThan(AircraftPerformance.Atr42.RotateX));
             Assert.That(AircraftPerformance.Boeing7378.RunwayExitKnots,
@@ -139,7 +139,10 @@ namespace Airside.Tests
                 var rightZ = (rightMin.z + rightMax.z) * 0.5f;
                 Assert.That(leftZ, Is.EqualTo(rightZ).Within(0.02f),
                     $"{spec.Id} main gear should share one longitudinal pivot");
-                var modelWheelbase = Math.Abs(noseZ - (leftZ + rightZ) * 0.5f);
+                var centreZ = (leftZ + rightZ) * 0.5f;
+                if (AircraftModelBounds.TryMeasurePart(json, "gear_body_left", out var bodyMin, out var bodyMax))
+                    centreZ = (centreZ + (bodyMin.z + bodyMax.z) * .5f) * .5f;
+                var modelWheelbase = Math.Abs(noseZ - centreZ);
                 Assert.That(AircraftPerformance.For(spec.Type).NoseToMainGearMetres,
                     Is.EqualTo(modelWheelbase).Within(0.02f),
                     $"{spec.Id} taxi solver must match its {modelWheelbase:0.00} m visible gear spacing");

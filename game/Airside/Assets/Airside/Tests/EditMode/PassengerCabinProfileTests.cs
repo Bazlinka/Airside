@@ -11,7 +11,7 @@ namespace Airside.Tests
         public void EverySupportedPassengerTypeHasExactlyOneProfile()
         {
             var expected = new[] { "SF34", "ATR42", "DH8D", "B738", "B38M", "A320", "A21N",
-                "E190", "A223", "A359", "A339", "B789", "B78X" };
+                "E190", "A223", "A359", "A339", "B789", "B78X", "B748", "A388" };
             Assert.That(PassengerCabinProfile.All.Select(p => p.TypeId), Is.EquivalentTo(expected));
             foreach (var profile in PassengerCabinProfile.All)
             {

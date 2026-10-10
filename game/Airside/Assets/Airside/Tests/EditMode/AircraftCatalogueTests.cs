@@ -57,7 +57,7 @@ namespace Airside.Tests
             Assert.That(genuine.Select(s => s.Id), Is.EquivalentTo(new[]
             {
                 "ATR42", "SF34", "DH8D", "E190", "A223", "A320", "B738",
-                "B38M", "A21N", "A339", "A359", "B789", "B78X"
+                "B38M", "A21N", "A339", "A359", "B789", "B78X", "B748", "A388"
             }));
             var thumbnails = new HashSet<string>();
             foreach (var spec in genuine)
@@ -94,7 +94,7 @@ namespace Airside.Tests
             {
                 var gate = spec.StandClass == StandClass.TerminalGate;
                 Assert.That(AirlineOperations.NeedsTerminalGate(spec.Type), Is.EqualTo(gate), spec.Name);
-                Assert.That(AirlineOperations.StandFits(spec.Type, new StableId("GATE-18")), Is.EqualTo(gate),
+                Assert.That(AirlineOperations.StandFits(spec.Type, new StableId("GATE-18")), Is.EqualTo(gate && spec.CodeLetter <= 'E'),
                     $"{spec.Name} fits a code E terminal gate when it needs a gate");
                 Assert.That(AirlineOperations.StandFits(spec.Type, new StableId("GATE-13")),
                     Is.EqualTo(gate && AircraftCatalogue.CodeLetter(spec.Type) <= 'C'),

@@ -524,6 +524,86 @@
       "mean_step": 0.099717
     },
     {
+      "file": "eng_b748_idle_v02.wav",
+      "sha256": "71525d1f7181802543c615ba67324bee5808a090fc63acb4889ea641d766ba22",
+      "seconds": 8.0,
+      "loop": true,
+      "rms_dbfs": -20.0,
+      "peak": 0.393783,
+      "seam": 0.0,
+      "mean_step": 0.017795
+    },
+    {
+      "file": "eng_b748_power_v02.wav",
+      "sha256": "cbd5d44aaa1e160fcc76d2f2d1e25b95e9035feb3dfc362c2a1843e9f102a52d",
+      "seconds": 8.0,
+      "loop": true,
+      "rms_dbfs": -18.0,
+      "peak": 0.472206,
+      "seam": 0.0,
+      "mean_step": 0.050753
+    },
+    {
+      "file": "eng_b748_core_v02.wav",
+      "sha256": "9809b2f4932e4af701bae7f2202a35e67284c1ec861928afab38f206357d9a5c",
+      "seconds": 8.0,
+      "loop": true,
+      "rms_dbfs": -20.0,
+      "peak": 0.229862,
+      "seam": 0.0,
+      "mean_step": 0.007441
+    },
+    {
+      "file": "eng_b748_reverse_v02.wav",
+      "sha256": "a18d0602205befa2a70739066e825cc6c744e17ead163a1ca9117ab5d6250ebd",
+      "seconds": 8.0,
+      "loop": true,
+      "rms_dbfs": -18.0,
+      "peak": 0.43103,
+      "seam": 1e-06,
+      "mean_step": 0.099724
+    },
+    {
+      "file": "eng_a388_idle_v02.wav",
+      "sha256": "b9a56e4392f1f60b2940fc62d1fe9b9bf073e095ed77ef87e64ecefeb1b3e82b",
+      "seconds": 8.0,
+      "loop": true,
+      "rms_dbfs": -20.0,
+      "peak": 0.43451,
+      "seam": 0.0,
+      "mean_step": 0.017785
+    },
+    {
+      "file": "eng_a388_power_v02.wav",
+      "sha256": "18c18c5d31a9889cc99ed53387059b66e3b27093a901a72463de6a991f47565b",
+      "seconds": 8.0,
+      "loop": true,
+      "rms_dbfs": -18.0,
+      "peak": 0.552245,
+      "seam": 1e-06,
+      "mean_step": 0.046938
+    },
+    {
+      "file": "eng_a388_core_v02.wav",
+      "sha256": "16af4ca6d21ede3fbaa1202311816b7bf5a75db4c5e3cd33d08c565b7a7dd09f",
+      "seconds": 8.0,
+      "loop": true,
+      "rms_dbfs": -20.0,
+      "peak": 0.229906,
+      "seam": 0.0,
+      "mean_step": 0.007436
+    },
+    {
+      "file": "eng_a388_reverse_v02.wav",
+      "sha256": "083005b7fef118452874440a027b1f3a18ae59a342e27df0ab3cd7d2a1d0e1b9",
+      "seconds": 8.0,
+      "loop": true,
+      "rms_dbfs": -18.0,
+      "peak": 0.421834,
+      "seam": 0.0,
+      "mean_step": 0.099615
+    },
+    {
       "file": "eng_b412_idle_v02.wav",
       "sha256": "6c7ac9788ece122166b06378c1d3ed7888f7717854d61614344932e6b843f9f9",
       "seconds": 8.0,

@@ -104,6 +104,22 @@
       "gain": 1.14,
       "brightness_hz": 2350,
       "body_hz": 114
+    },
+    {
+      "id": "B748",
+      "family": "jet",
+      "pitch": 0.78,
+      "gain": 1.3,
+      "brightness_hz": 1900,
+      "body_hz": 72
+    },
+    {
+      "id": "A388",
+      "family": "jet",
+      "pitch": 0.74,
+      "gain": 1.38,
+      "brightness_hz": 1700,
+      "body_hz": 65
     }
   ],
   "rotorcraft": [

@@ -18,7 +18,7 @@ namespace Airside.Presentation
         private bool RegionalCabin => Profile.TypeId == "SF34" || Profile.TypeId == "ATR42" || Profile.TypeId == "DH8D";
         private bool RegionalJetCabin => Profile.TypeId == "E190" || Profile.TypeId == "A223";
         private bool WidebodyCabin => Profile.SeatGroups.Length == 3;
-        private bool AirbusCabin => Profile.TypeId == "A320" || Profile.TypeId == "A21N" || Profile.TypeId == "A359" || Profile.TypeId == "A339" || Profile.TypeId == "A223";
+        private bool AirbusCabin => Profile.TypeId == "A320" || Profile.TypeId == "A21N" || Profile.TypeId == "A359" || Profile.TypeId == "A339" || Profile.TypeId == "A223" || Profile.TypeId == "A388";
         private Light _cabinLight;
         private Mesh _seatCube;
         private readonly Dictionary<Material,List<CombineInstance>> _seatParts=new();

@@ -56,6 +56,8 @@ namespace Airside.Domain
         public static AircraftType Boeing78710 => AircraftCatalogue.Boeing78710.Type;
         public static AircraftType AirbusA330900 => AircraftCatalogue.AirbusA330900.Type;
         public static AircraftType Boeing7879 => AircraftCatalogue.Boeing7879.Type;
+        public static AircraftType Boeing7478 => AircraftCatalogue.Boeing7478.Type;
+        public static AircraftType AirbusA380800 => AircraftCatalogue.AirbusA380800.Type;
         public static AircraftType Bell412 => AircraftCatalogue.Bell412.Type;
 
         public bool CanReach(double legKm) => legKm <= PracticalRangeKm;

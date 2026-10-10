@@ -141,6 +141,8 @@ namespace Airside.Simulation
                 "A339" => new Profile(5_500, 251, 2_600, 2_100, LeaseTerms.ValueAud(type)),
                 "B789" => new Profile(5_000, 254, 2_600, 2_000, LeaseTerms.ValueAud(type)),
                 "B78X" => new Profile(5_300, 254, 2_700, 2_100, LeaseTerms.ValueAud(type)),
+                "B748" => new Profile(10_500, 447.7, 4_000, 4_000, LeaseTerms.ValueAud(type)),
+                "A388" => new Profile(12_000, 575, 4_500, 5_000, LeaseTerms.ValueAud(type)),
                 "A359" => new Profile(5_600, 280, 2_700, 2_200, LeaseTerms.ValueAud(type)),
                 _ => throw new ArgumentException($"{type.Id} has no cost profile.", nameof(type))
             };

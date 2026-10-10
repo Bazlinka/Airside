@@ -563,3 +563,7 @@ weather and altitude suppress clear-sky effects. Existing solid-colour sky is fa
 Refinement #773 adds restrained opposing rose and peach dawn; baseline native frames
 inspected; refined clean Mac build and cycle/opposing/weather frames inspected. GPU/seasonal
 limits: `docs/testing/sky-refinement-2026-10-09/README.md`. Decision: `2026-10-09-directional-twilight-sky`.
+
+## Four-engine passenger fleet — 10 October 2026
+
+Bailey requested 747 and A380 support and selected the passenger 747-8. Existing approved miniature style and fictional airline paint apply. AIR-018: `Models/Aircraft/mdl_747_8_v01.gltf`/`.bin`/`.fbx`, thumbnail `UI/Aircraft/thb_air_b748_v01.png`; AIR-019: `Models/Aircraft/mdl_a380_800_v01.gltf`/`.bin`/`.fbx`, `UI/Aircraft/thb_air_a388_v01.png`. Both are original true-scale 3D kits, zero external geometry/cost: continuous upper hump vs full double deck, four nacelles, four main trucks plus nose pair, articulated surfaces, skin-fitted glazing/doors and existing fictional paint pipeline. Source `scripts/generate-four-engine-fleet.py`; packaged mirrors required. Integrated for native review, not a claim of final approved fidelity or performance. Representative shared cockpit families and main-deck cabin; exact instrumentation/upper-deck movement remain outside this slice. Evidence: `docs/testing/four-engine-fleet-2026-10-10.md`.

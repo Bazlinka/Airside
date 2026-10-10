@@ -38,7 +38,7 @@ namespace Airside.Tests
                 Assert.That(loaded.Pitch, Is.InRange(0.6f, 1.5f), spec.Id);
                 Assert.That(float.IsNaN(loaded.Power), Is.False);
             }
-            Assert.That(keys.Count, Is.EqualTo(13));
+            Assert.That(keys.Count, Is.EqualTo(AircraftCatalogue.All.Count));
         }
 
         [Test]

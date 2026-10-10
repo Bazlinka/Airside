@@ -182,10 +182,10 @@ namespace Airside.Tests
             // 20R, 22R and 28R share a pier with code E gates 20, 22L and 28L: a 737 there closes
             // the widebody gate as surely as parking on it (ADR 0156).
             Assert.That(AirlineOperations.WastesStand(AircraftType.Boeing7378, new StableId("GATE-20R")), Is.True);
-            Assert.That(AirlineOperations.WastesStand(AircraftType.Boeing7378, new StableId("GATE-16R")), Is.False,
-                "16L is code C too, so 16R closes nothing a widebody needs");
+            Assert.That(AirlineOperations.WastesStand(AircraftType.Boeing7378, new StableId("GATE-16R")), Is.True,
+                "16R is now a code F line needed by the four-engine fleet");
             Assert.That(AirlineOperations.WastesStand(AircraftType.Boeing7378, new StableId("GATE-13")), Is.False);
-            Assert.That(AirlineOperations.WastesStand(AircraftType.Boeing78710, new StableId("GATE-20")), Is.False);
+            Assert.That(AirlineOperations.WastesStand(AircraftType.Boeing78710, new StableId("GATE-20")), Is.True);
 
             // One of every type in catalogue order: the last widebody used to find no stand because
             // the code C jets had taken 20R, 22R and 28R with ten plain code C gates still free.

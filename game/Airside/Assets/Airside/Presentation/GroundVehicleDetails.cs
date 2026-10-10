@@ -66,6 +66,15 @@ namespace Airside.Presentation
             driver.transform.localRotation = Quaternion.Euler(0,90,0); // Kit's forward is +X until FacingOffset is applied.
             var hips = bones.FirstOrDefault(t => t.name == "Hips");
             if (hips != null) driver.transform.position += hipsAt - hips.position;
+            var crown = bones.FirstOrDefault(t => t.name == "Head_end");
+            var canopy = vehicle.GetComponentsInChildren<MeshFilter>(true).FirstOrDefault(p =>
+                p.name.EndsWith("tug_rollbar_top",StringComparison.OrdinalIgnoreCase)
+                || p.name.EndsWith("cab_roof",StringComparison.OrdinalIgnoreCase));
+            if (crown != null && canopy != null && canopy.TryGetComponent<Renderer>(out var roof))
+            {
+                var excess = crown.position.y + .08f - roof.bounds.min.y;
+                if (excess > 0) driver.transform.position -= Vector3.up * excess;
+            }
         }
         public void Motion(float distance, float headingChange, float dt, double clock)
         {

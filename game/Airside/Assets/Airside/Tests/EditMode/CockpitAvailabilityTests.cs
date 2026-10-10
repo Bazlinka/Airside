@@ -44,7 +44,7 @@ namespace Airside.Tests
         [Test] public void EveryCatalogueJetHasAnExplicitUniqueProfileAndAccess()
         {
             var jets = AircraftCatalogue.All.Where(s => s.Id != "SF34" && s.Id != AircraftType.Atr42.Id && s.Id != "DH8D").ToArray();
-            Assert.That(jets.Length, Is.EqualTo(10));
+            Assert.That(jets.Length, Is.EqualTo(12));
             Assert.That(JetCockpitProfile.All.Select(p => p.TypeId), Is.EquivalentTo(jets.Select(s => s.Id)));
             foreach (var spec in jets)
             {

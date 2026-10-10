@@ -126,6 +126,34 @@ namespace Airside.Tests
             Assert.That(PlayerBase.CanUseStand(PlayerBaseLevel.JetGate, bought.Type, bought.Stand), Is.False);
         }
 
+        [TestCase("B748")]
+        [TestCase("A388")]
+        public void ReturnStandReservationSurvivesSaveAndNeverBlocksItsOwner(string id)
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(9 * 3600));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(12), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var player = Airline.Player("Return reservation", "#338899");
+            ops.AddAirline(player);
+            AircraftType.TryFromId(id, out var type);
+            var stand = new StableId("GATE-20R");
+            var aircraft = ops.AddAircraft(player, "VH-LRG", type, stand);
+            aircraft.DepartureStand = stand;
+            aircraft.Stand = default;
+            DestinationCatalogue.TryFind("KGC", out var destination);
+            aircraft.CurrentDestination = destination;
+            aircraft.Restore(FleetState.Outbound, clock.Now, clock.Now.Advance(1800));
+            Assert.That(ops.IsStandFree(stand), Is.False);
+            Assert.That(ops.IsStandFree(new StableId("GATE-20")), Is.False);
+            Assert.That(ops.FreeStandsFor(type, aircraft).Any(s => s.Equals(stand)), Is.True);
+            Assert.That(ops.SuggestStandFor(type, aircraft).HasValue, Is.True);
+            Assert.That(ops.FreeStandsFor(AircraftType.Boeing7378).Any(s => s.Equals(stand)), Is.False);
+            var restored = AirlineSave.Restore(AirlineSave.Capture(ops), clock);
+            var owner = restored.Fleet.Single(a => a.Registration == "VH-LRG");
+            Assert.That(restored.IsStandFree(stand), Is.False);
+            Assert.That(restored.FreeStandsFor(type, owner).Any(s => s.Equals(stand)), Is.True);
+        }
+
         [Test]
         public void A380LeavesSuperWakeBehindIt()
         {

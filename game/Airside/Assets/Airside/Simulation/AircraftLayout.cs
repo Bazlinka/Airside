@@ -120,6 +120,7 @@ namespace Airside.Simulation
 
         public bool IsTurboprop => Engine.IsPropeller;
         public bool CateredByTruck => CateringDoor.HasValue;
+        private EngineLayout FuelEngine => OuterEngine ?? Engine;
         public float WingMidZ => (WingBackZ + WingFrontZ) * 0.5f;
         public float Length => NoseZ - TailZ;
 
@@ -226,12 +227,13 @@ namespace Airside.Simulation
         /// <summary>Where the fuel truck parks: beside the right wing, clear of nacelle and propeller.</summary>
         public (float X, float Z) FuelTruck => IsTurboprop
             ? Clear(Engine.X + Engine.PropellerRadius + 4.5f, WingBackZ - 4.0f, 2.2f, true)
-            : Clear(Engine.X + Engine.HalfWidth + 4.5f, Engine.ZBack - 2.5f, 2.2f, true);
+            : Clear(FuelEngine.X + FuelEngine.HalfWidth + 4.5f, FuelEngine.ZBack - 2.5f, 2.2f, true);
 
         /// <summary>The refuel coupling under the right wing, where the hose is connected.</summary>
         public (float X, float Z) FuelCoupling => IsTurboprop
             ? Clear(Engine.X + 1.7f, WingBackZ - 0.9f, 0.6f, false)
-            : Clear(Engine.X + Engine.HalfWidth + 1.3f, Engine.ZBack - 1.5f, 0.6f, false);
+            : Clear(FuelEngine.X + FuelEngine.HalfWidth + 1.3f,
+                OuterEngine.HasValue ? FuelEngine.ZFront - 1.5f : FuelEngine.ZBack - 1.5f, 0.6f, false);
 
         /// <summary>Where the catering hi-loader docks, beside its service door. Null without a truck.</summary>
         public (float X, float Z)? CateringTruck => CateringDoor is { } door

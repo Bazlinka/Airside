@@ -10,7 +10,7 @@ A388 A380-800 catalogue/purchase/performance/visual/audio support. Code F stands
 International lease at 18R with clear shared F overflow, four-engine footprints; A380 Super wake rules.
 Original distinct 3D kits, skins/glazing, independent main trucks and packaged mirrors.
 Existing save schema, ambient Adelaide schedule and prior fleet assets preserved.
-112 initial headless and 86 native checks pass; economy v2 integrated, final review in progress.
+112 initial headless / 86 native and 63 final regressions pass; final native journeys pending.
 Evidence/limits:
 `docs/testing/four-engine-fleet-2026-10-10.md`. Representative shared cockpit families
 and main-deck cabin; exact instruments and upper-deck traversal not implemented.
@@ -22,7 +22,7 @@ new types use shared lease terms (A$4.86M / A$4.05M deposits). Standing-cost/loa
 remains with its owning task. Prior economy and ground-team handoff is archived below.
 
 **Next:** first clean universal build and 84 integrated headless checks pass. Complete
-selected-aircraft engine-start/journey and native save/view review (fixture uses save restore), then merge
+selected-aircraft journeys and return-stand/service-clearance retest (private fixture uses save restore), then merge
 this scoped task. Preserve personal saves, running apps and other tools' economy work.
 Standing policy: focused checks chosen automatically; broad suites/soaks on request.
 

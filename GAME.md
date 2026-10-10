@@ -9,7 +9,9 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 set a minimum player preparation budget; uniformed pilots/cabin crew board using existing
 stairs/bridges. Service vehicles gain seated drivers, opaque body shading, steering and
 small lamp sources; motion follows simulation-clock advancement. No hiring/economy/save
-schema change. 176 focused checks and updated capture-delay lock pass; native review pending.
+schema change. 176 focused checks and updated capture-delay lock pass; native selected frames inspected.
+Clean universal 3498e79c build and nine final feature actions pass, zero errors;
+40× ADL–KGC round trip passes on 7592be76 (regional readiness unchanged in final).
 Prior crew CI comparison: six stale timing fixtures fixed; ten failures reproduced on
 pre-crew main. Evidence: `docs/testing/flight-crew-vehicles-2026-10-10.md`.
 
@@ -72,8 +74,8 @@ pass. Synthetic 220 m/s rain probe reaches 216.7 m/s (previously 90); real fligh
 crossing and control hit-testing unverified.
 Decision/evidence: `docs/testing/tower-rain-2026-10-09/README.md`.
 
-**Next:** ground-team implementation complete. Bailey can use the isolated stamped ground-team
-bbe40abd build for personal playtesting; it predates the subsequent sky/economy merge.
+**Next:** flight/ground-team work complete. The isolated 3498e79c build is ready for
+personal playtesting; source has current main and the pilot-aware fixture merge.
 The separate sky bb4a17ea build/evidence retains the limits recorded above.
 Other active state and prior verification limits are preserved in
 `docs/history/game-handoff-before-tower-rain-2026-10-09.md`.

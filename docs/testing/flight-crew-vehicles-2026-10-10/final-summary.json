@@ -1,0 +1,22 @@
+{
+  "protocol": 1,
+  "commit": "3498e79c7bae2017926f83b0e07c4572d4c1fa94",
+  "profile": "smoke",
+  "status": "passed",
+  "features": [
+    "booking",
+    "save",
+    "views"
+  ],
+  "issue": "",
+  "visualQuality": "requires agent image inspection",
+  "performance": "unverified",
+  "scenarios": [
+    {
+      "name": "features",
+      "status": "passed",
+      "steps": 9,
+      "realSeconds": 24.1
+    }
+  ]
+}

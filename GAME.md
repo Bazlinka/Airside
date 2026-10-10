@@ -5,6 +5,15 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Flight crews and ground vehicles (10 Oct, Codex, #779):** captain walkarounds now
+set a minimum player preparation budget; uniformed pilots/cabin crew board using existing
+stairs/bridges. Service vehicles gain seated drivers, opaque body shading, steering and
+small lamp sources; motion follows simulation-clock advancement. No hiring/economy/save
+schema change. 176 focused checks and updated capture-delay lock pass; native review pending.
+Prior crew CI comparison: six stale timing fixtures fixed; ten failures reproduced on
+pre-crew main. Evidence: `docs/testing/flight-crew-vehicles-2026-10-10.md`.
+
+
 **Economy v2, step 1 (9 Oct, Claude):** real Australian dollars. Flight cost/pay come from `FlightCostModel`; aircraft "prices" are lease
 deposits (`LeaseTerms`); opening cash A$1.5M; save v24 scales old money x35 once on load. Real `CareerBot` pacing matches the old economy
 (Regional 10.9 h, Domestic 30 h, International 74 h; 5 aircraft at 150 h). Not done: daily lease/insurance, bank loan + recovery, "deposit/lease"

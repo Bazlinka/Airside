@@ -151,12 +151,9 @@ namespace Airside.Tests
             RunTo(clock, ops, 100);
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(50)).Accepted, Is.False, "in the past");
 
-            // Booked from t=100, the crew's full preparation must finish before pushback, so the
-            // earliest departure that really starts at its booked time is now + lead.
-            var departAt = 100 + DeparturePrep.LeadSeconds(plane.Type, PlayerBaseLevel.Starter);
-            ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(departAt));
-            RunTo(clock, ops, departAt + 1);
-            Assert.That(ops.ScheduleDeparture(plane, Code("PLO"), new SimulationTime(departAt)).Accepted, Is.False, "already taxiing");
+            ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(500));
+            RunTo(clock, ops, Math.Max(501, DeparturePrep.ReadyAtSeconds(plane) + 1));
+            Assert.That(ops.ScheduleDeparture(plane, Code("PLO"), new SimulationTime(500)).Accepted, Is.False, "already taxiing");
             Assert.That(ops.CancelDeparture(plane).Accepted, Is.False);
 
             Assert.That(ops.ScheduleDeparture(other, Code("KGC"), new SimulationTime(5000)).Accepted, Is.True);
@@ -346,15 +343,11 @@ namespace Airside.Tests
             ops.AddAirline(player);
             var bayPlane = ops.AddAircraft(player, "VH-PAA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
             var gatePlane = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing7378, new StableId("GATE-18"));
-            // Depart no earlier than either aircraft's full preparation (fuel, catering, baggage,
-            // boarding) allows; baggage time scales with the aircraft, so a jet needs longer.
-            var departAt = System.Math.Max(
-                DeparturePrep.LeadSeconds(bayPlane.Type, PlayerBaseLevel.Starter),
-                DeparturePrep.LeadSeconds(gatePlane.Type, PlayerBaseLevel.Starter)) + 60;
-            ops.ScheduleDeparture(bayPlane, Code("KGC"), new SimulationTime(departAt));
-            ops.ScheduleDeparture(gatePlane, Code("MEL"), new SimulationTime(departAt));
+            var departure = new SimulationTime(DeparturePrep.LeadSeconds(gatePlane.Type) + 120);
+            ops.ScheduleDeparture(bayPlane, Code("KGC"), departure);
+            ops.ScheduleDeparture(gatePlane, Code("MEL"), departure);
 
-            RunTo(clock, ops, departAt);
+            RunTo(clock, ops, departure.ElapsedSeconds);
             Assert.That(bayPlane.State, Is.EqualTo(FleetState.TaxiOut));
             Assert.That(gatePlane.State, Is.EqualTo(FleetState.TaxiOut),
                 "a different apron's pushback should not be held up by the bay's release gate");

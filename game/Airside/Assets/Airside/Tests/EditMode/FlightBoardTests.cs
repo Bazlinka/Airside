@@ -150,7 +150,7 @@ namespace Airside.Tests
             var prepStart = aircraft.PrepStartedAt!.Value.ElapsedSeconds;
 
             Assert.That(FlightBoard.DepartureDelayMinutes(aircraft, new SimulationTime(659)), Is.Zero);
-            Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(prepStart + 45)), Is.EqualTo("Fuelling 50%"));
+            Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(prepStart + DeparturePrep.StageSecondsFor(aircraft.Type, DeparturePrepStage.Fuel, aircraft.BaseLevel) / 2)), Is.EqualTo("Fuelling 50%"));
             Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(659)), Is.EqualTo("Ready"));
             Assert.That(FlightBoard.DepartureDelayMinutes(aircraft, new SimulationTime(720)), Is.EqualTo(2));
             Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(720)), Is.EqualTo("Gate hold"));

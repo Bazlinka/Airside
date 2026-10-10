@@ -498,6 +498,7 @@ namespace Airside.Presentation
             UpdatePassengerBuses();
             UpdatePassengers();
             UpdateAllRampCrew();
+            UpdateFlightCrew();
         }
 
         private void UpdatePassengerBuses()

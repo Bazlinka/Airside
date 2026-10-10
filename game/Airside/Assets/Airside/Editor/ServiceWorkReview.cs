@@ -58,11 +58,19 @@ public static class ServiceWorkReview
         Frame(output, "ATR42", RampActivity.Catering, 44, 75);
         Frame(output, "A320", RampActivity.Catering, 60, 112);
         Frame(output, "ATR42", RampActivity.Boarding, 60, 120, new List<double> { 8, 14, 19, 26, 33, 41, 47 });
+        Frame(output, "SF34", RampActivity.None, 20, FlightCrewWork.InspectionSeconds(AircraftType.Saab340));
+        Frame(output, "A320", RampActivity.None, 40, FlightCrewWork.InspectionSeconds(AircraftType.AirbusA320200));
+        sun.intensity=.12f;
+        RenderSettings.ambientSkyColor=new Color(.12f,.16f,.23f);
+        RenderSettings.ambientEquatorColor=new Color(.08f,.10f,.14f);
+        RenderSettings.ambientGroundColor=new Color(.04f,.05f,.07f);
+        Frame(Path.Combine(output,"night"),"ATR42",RampActivity.Fuel,45,90);
     }
 
     private static void Frame(string output, string id, RampActivity activity, double elapsed, double seconds,
         List<double> drops = null)
     {
+        Directory.CreateDirectory(output);
         AircraftType.TryFromId(id, out var type);
         var layout = AircraftLayout.For(type);
         var frame = new GameObject("Frame").transform;
@@ -86,6 +94,19 @@ public static class ServiceWorkReview
         var parent = new GameObject("Work").transform;
         parent.SetParent(frame, false);
 
+        if (activity == RampActivity.None)
+        {
+            var inspect = FlightCrewWork.Inspection(type, elapsed);
+            var pilot = Object.Instantiate(Resources.Load<GameObject>("Airside/Characters/chr_passenger_m_suit"), parent);
+            if (pilot.TryGetComponent<Animator>(out var animator)) animator.enabled = false;
+            pilot.transform.localScale = Vector3.one * (1.78f / AirsidePrototype.MeasureFigureHeight(pilot));
+            FlightCrewUniform.Apply(pilot, true);
+            var suffix = inspect.Walking ? "Walk" : "Interact";
+            var clip = Resources.LoadAll<AnimationClip>("Airside/Characters/chr_passenger_m_suit").First(c => c.name.EndsWith(suffix,StringComparison.Ordinal));
+            pilot.transform.SetPositionAndRotation(new Vector3(inspect.X,0,inspect.Z),Quaternion.Euler(0,inspect.FacingDegrees,0));
+            clip.SampleAnimation(pilot,.3f*clip.length);
+            actions.Add(inspect);
+        }
         for (var i = 0; i < crew.Count; i++)
             Worker(crew[i], actions[i], parent, i, scene, activity);
 
@@ -139,7 +160,7 @@ public static class ServiceWorkReview
         }
 
         // Frame the workers.
-        var focus = crew.Count == 0 ? Vector3.zero
+        var focus = actions.Count == 0 ? Vector3.zero
             : actions.Aggregate(Vector3.zero, (sum, a) => sum + new Vector3(a.X, a.Height, a.Z)) / actions.Count;
         var sideSign = actions.Count > 0 && actions.Average(a => a.X) < 0f ? -1f : 1f;
         var camera = new GameObject("Camera").AddComponent<Camera>();

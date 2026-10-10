@@ -247,7 +247,8 @@ namespace Airside.Simulation
         /// <summary>How long <paramref name="stage"/> takes for this type at this base level (0 for Idle/Ready).</summary>
         public static long StageSecondsFor(AircraftType type, DeparturePrepStage stage, PlayerBaseLevel baseLevel) => stage switch
         {
-            DeparturePrepStage.Fuel => Scale(type, FuelSeconds, baseLevel),
+            DeparturePrepStage.Fuel => type != null && type.IsRotorcraft ? Scale(type, FuelSeconds, baseLevel)
+                : Math.Max(Scale(type, FuelSeconds, baseLevel), FlightCrewWork.InspectionSeconds(type)),
             DeparturePrepStage.Catering => Scale(type, CateringSeconds, baseLevel),
             DeparturePrepStage.Baggage => type != null && type.IsRotorcraft ? Scale(type, BaggageSeconds, baseLevel)
                 : Math.Max(Scale(type, BaggageSeconds, baseLevel), TurnaroundCrewWork.BaggageSeconds(type)),

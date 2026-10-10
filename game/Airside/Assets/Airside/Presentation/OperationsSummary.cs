@@ -153,7 +153,7 @@ namespace Airside.Presentation
             var g = goal.Value;
             if (string.IsNullOrEmpty(g.Id))
                 return new CareerObjective("Keep the airline flying",
-                    $"${career.Funds:N0} on hand · {career.Reliability}% reliability · leases ${LeasesPerDay(playerFleet):N0}/day", 0f, next, nextSeverity);
+                    $"${career.Funds:N0} on hand · {career.Reliability}% reliability · leases ${LeasesPerDay(playerFleet):N0}/day{(career.Loan > 0 ? $" · ${career.Loan:N0} owed" : "")}", 0f, next, nextSeverity);
             var finale = career.FinaleReached;
             return new CareerObjective(
                 finale ? "Established airline" : g.Title,

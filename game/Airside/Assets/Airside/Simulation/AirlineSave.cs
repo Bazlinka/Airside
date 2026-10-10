@@ -57,7 +57,8 @@ namespace Airside.Simulation
         // v24 (ADR 2026-10-09-economy-v2-real-dollar-scale): money is in real Australian dollars. Older saves have every
         // money amount multiplied once on load by FlightCostModel.LegacySaveMoneyScale (see AirlineSave.ScaleLegacyMoney).
         // v25: the last Adelaide day whose lease and insurance was paid. Older saves start paying from the day they load.
-        public const int CurrentVersion = 25;
+        // v26: the bank loan balance. Older saves have no loan.
+        public const int CurrentVersion = 26;
 
         public int Version = CurrentVersion;
 
@@ -153,6 +154,9 @@ namespace Airside.Simulation
         public long ReportedDay;
         public int HighReliabilityStreak;
         public List<int> RecentReliability = new();
+
+        // ---- Bank loan (v26) -------------------------------------------------------
+        public long CareerLoan;
 
         // ---- Standing costs (v25) --------------------------------------------------
         public bool HasStandingPaidDay;
@@ -344,6 +348,7 @@ namespace Airside.Simulation
             data.ServedDestinationCodes.AddRange(operations.CareerState.ServedDestinations);
             data.OutstationBaseCodes.AddRange(operations.CareerState.OutstationBases);
             data.RecentServiceMargins.AddRange(operations.CareerState.RecentServiceMargins);
+            data.CareerLoan = operations.CareerState.Loan;
             var standingDay = operations.SaveStandingPaidDay();
             data.HasStandingPaidDay = standingDay.HasValue;
             data.StandingPaidThroughDay = standingDay ?? 0;
@@ -812,6 +817,8 @@ namespace Airside.Simulation
             // retroactively; the first day observed after loading becomes the starting point.
             if (data.Version >= 25)
                 operations.RestoreStandingPaidDay(data.HasStandingPaidDay ? data.StandingPaidThroughDay : null);
+            if (data.Version >= 26)
+                operations.CareerState.RestoreLoan(data.CareerLoan);
 
             if (data.Version >= 13)
             {

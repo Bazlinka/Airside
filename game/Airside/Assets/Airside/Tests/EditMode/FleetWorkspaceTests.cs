@@ -184,5 +184,38 @@ namespace Airside.Tests
             Assert.That(layout.MarketRow(2).Right, Is.LessThanOrEqualTo(layout.Market.Right + 0.01f));
         }
 
+
+        [Test]
+        public void Market_OffersToBorrowTheGapForADepositCashCannotCover()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            var atr = AircraftAcquisition.Atr42;
+            var funds = atr.Price - 50_000;
+            ops.RestoreCareerState(funds, 100, nameof(OperatingTier.Provisional), null, 0, 0,
+                System.Array.Empty<string>(), System.Array.Empty<string>(), 10, baseLevel: PlayerBaseLevel.ExpandedRegional);
+            var model = new FleetWorkspaceModel();
+            model.Rebuild(ops, clock.Now, null);
+
+            var offer = model.Market.Single(o => o.Type == AircraftType.Atr42);
+            Assert.That(offer.Affordable, Is.False);
+            Assert.That(offer.CanBuy, Is.False);
+            Assert.That(offer.CanBorrowAndBuy, Is.True);
+            Assert.That(offer.BorrowNeeded, Is.EqualTo(50_000));
+            Assert.That(offer.RequirementLine, Does.Contain("Borrow $50,000"));
+        }
+
+        [Test]
+        public void Market_DoesNotOfferToBorrowBeyondTheBanksCap()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            ops.RestoreCareerState(0, 100, nameof(OperatingTier.Provisional), null, 0, 0,
+                System.Array.Empty<string>(), System.Array.Empty<string>(), 10, baseLevel: PlayerBaseLevel.ExpandedRegional);
+            ops.CareerState.RestoreLoan(FlightCostModel.LoanCap(OperatingTier.Provisional));
+            var model = new FleetWorkspaceModel();
+            model.Rebuild(ops, clock.Now, null);
+
+            var offer = model.Market.Single(o => o.Type == AircraftType.Atr42);
+            Assert.That(offer.CanBorrowAndBuy, Is.False, "the bank is already at its limit for this tier");
+        }
     }
 }

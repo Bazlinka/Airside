@@ -230,6 +230,48 @@ namespace Airside.Simulation
             return paid;
         }
 
+        // ---- Bank loan (Economy v2) ------------------------------------------------------------------------------------------
+
+        /// <summary>The bank loan balance, A$. Interest accrues daily (see <see cref="FlightCostModel.LoanInterestPerDay"/>).</summary>
+        public long Loan { get; private set; }
+
+        /// <summary>The most this tier may owe (<see cref="FlightCostModel.LoanCap"/>).</summary>
+        public long LoanCap => FlightCostModel.LoanCap(Tier);
+
+        /// <summary>How much more can be borrowed right now; zero once the balance reaches or passes the cap.</summary>
+        public long LoanHeadroom => Math.Max(0, LoanCap - Loan);
+
+        internal void RestoreLoan(long balance) => Loan = Math.Max(0, balance);
+
+        /// <summary>Draws up to <paramref name="amount"/> within the cap and returns what was drawn.</summary>
+        internal long Borrow(long amount)
+        {
+            if (amount <= 0)
+                return 0;
+            var drawn = Math.Min(amount, LoanHeadroom);
+            Loan += drawn;
+            Funds += drawn;
+            return drawn;
+        }
+
+        /// <summary>Repays up to <paramref name="amount"/> from cash on hand and returns what was repaid.</summary>
+        internal long Repay(long amount)
+        {
+            if (amount <= 0 || Funds <= 0 || Loan <= 0)
+                return 0;
+            var paid = Math.Min(Math.Min(amount, Loan), Funds);
+            Loan -= paid;
+            Funds -= paid;
+            return paid;
+        }
+
+        /// <summary>Unpaid interest joins the balance; it may take the loan past the cap, which stops further borrowing.</summary>
+        internal void CapitaliseInterest(long amount)
+        {
+            if (amount > 0)
+                Loan += amount;
+        }
+
         internal void RefundDispatch(long cost)
         {
             if (cost > 0)

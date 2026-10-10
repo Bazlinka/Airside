@@ -3015,9 +3015,35 @@ namespace Airside.Presentation
             ShowToast($"You need {Article.A(definition.EligibleType.Name)} for this contract.");
         }
 
+        /// <summary>
+        /// Economy v2: when the deposit is more than cash but the bank would lend the gap (and leave a flight's cash), borrow
+        /// it so the one BUY button leases the aircraft. Only done when the purchase would otherwise be accepted, so a refused
+        /// purchase never leaves a loan behind. Returns false when a loan was needed and could not be drawn.
+        /// </summary>
+        private bool FinanceDepositIfShort(AircraftType type, string baseCode)
+        {
+            var career = _operations.CareerState;
+            if (career == null || !AircraftAcquisition.TryFor(type, out var offer) || career.CanAfford(offer.Price))
+                return true;
+            if (_operations.PurchaseRefusal(type, baseCode, ignoreFunds: true) != null)
+                return true;
+            var gap = offer.Price - Math.Max(0, career.Funds);
+            var usualFlight = _operations.DispatchCost(type, FlightEconomics.TypicalLegKm(type));
+            if (gap <= 0 || gap + usualFlight > career.LoanHeadroom)
+                return true;
+            var loan = _operations.TakeLoan(gap);
+            if (loan.Accepted)
+                return true;
+            ShowToast(loan.Reason);
+            PlayUiClick();
+            return false;
+        }
+
         private void BuyAircraftFromHud(string typeId)
         {
             if (!AircraftType.TryFromId(typeId, out var type))
+                return;
+            if (!FinanceDepositIfShort(type, _fleetWorkspace.BuyBase.Length > 0 ? _fleetWorkspace.BuyBase : _operations.Home.Code))
                 return;
             // The market delivers to the base chosen on the bases strip (ADR 0239).
             if (_fleetWorkspace.BuyBase != _operations.Home.Code && _fleetWorkspace.BuyBase.Length > 0)

@@ -151,6 +151,8 @@ namespace Airside.Presentation
             if (vehicle == null)
                 return;
 
+            var dt = VehicleMotionDeltaTime;
+            if (dt <= 0) return;
             vehicle.gameObject.SetActive(true);
             var target = active ? servicePosition : parkPosition;
             // First show may still be at origin — start from the park bay.
@@ -158,6 +160,7 @@ namespace Airside.Presentation
                 vehicle.position = parkPosition;
 
             var previous = vehicle.position;
+            var previousYaw = vehicle.eulerAngles.y;
             // Adelaide vehicle handbook: 25 km/h apron, 15 km/h terminal road,
             // and 10 km/h within 15 m of an aircraft (also when returning from service).
             var speed = Mathf.Min(active ? 7.5f : 5.5f, (routed ? 25f : 15f) / 3.6f);
@@ -165,7 +168,7 @@ namespace Airside.Presentation
             // Round parked aircraft, buildings and the terminal, not through them; and never
             // into the path of an aircraft that is taxiing or being pushed back.
             var steer = routed ? RouteWaypoint(vehicle, target, VehicleClearanceMetres) : target;
-            var next = Vector3.MoveTowards(previous, steer, Time.unscaledDeltaTime * speed);
+            var next = Vector3.MoveTowards(previous, steer, dt * speed);
             if (routed && !InMovingAircraftPath(previous) && InMovingAircraftPath(next + (next - previous).normalized * 4f))
                 next = previous;
             vehicle.position = next;
@@ -177,7 +180,7 @@ namespace Airside.Presentation
                 if (flat.sqrMagnitude > 0.0001f)
                 {
                     var look = Quaternion.LookRotation(flat.normalized, Vector3.up);
-                    vehicle.rotation = Quaternion.Slerp(vehicle.rotation, look, Time.unscaledDeltaTime * 4f);
+                    vehicle.rotation = Quaternion.Slerp(vehicle.rotation, look, dt * 4f);
                 }
             }
 
@@ -185,16 +188,31 @@ namespace Airside.Presentation
                 ResetServiceLoopParts(vehicle);
 
             // Presentation-only: wheels roll while the vehicle is moving (ANM-VEH rates).
-            var spinRpm = active
-                ? AirsideReusableMotion.VehicleWheelRpmTaxi
-                : AirsideReusableMotion.VehicleWheelRpmService;
-            var degrees = travel * 120f + (travel > 0.001f ? Time.unscaledDeltaTime * spinRpm : 0f);
+            var degrees = travel * 360f / (2f * Mathf.PI * .35f);
+            var wheels = _serviceWheelPivots.GetValue(vehicle, CollectServiceWheelPivots);
+            if (vehicle.TryGetComponent<GroundVehicleDetails>(out var details))
+                details.Motion(travel, Mathf.DeltaAngle(previousYaw,vehicle.eulerAngles.y), dt, _preciseTime);
             if (degrees <= 0f)
                 return;
-            var wheels = _serviceWheelPivots.GetValue(vehicle, CollectServiceWheelPivots);
             foreach (var wheel in wheels)
                 if (wheel.Pivot != null)
                     wheel.Pivot.Rotate(wheel.Axis, degrees, Space.Self);
+        }
+
+        private double _vehicleMotionClockSeen = double.NaN;
+        private int _vehicleMotionFrame = -1;
+        private float _vehicleMotionDelta;
+        private float VehicleMotionDeltaTime
+        {
+            get
+            {
+                if (_vehicleMotionFrame == Time.frameCount) return _vehicleMotionDelta;
+                _vehicleMotionFrame = Time.frameCount;
+                _vehicleMotionDelta = double.IsNaN(_vehicleMotionClockSeen) ? Time.unscaledDeltaTime
+                    : (float)Math.Clamp(_preciseTime - _vehicleMotionClockSeen, 0, 1);
+                _vehicleMotionClockSeen = _preciseTime;
+                return _vehicleMotionDelta;
+            }
         }
 
         // Weak keys release cached axle frames when a vehicle leaves the pool permanently.
@@ -708,7 +726,7 @@ namespace Airside.Presentation
                     if (kitName.StartsWith("window_mullion", StringComparison.Ordinal)
                         || kitName is "window_sill" or "window_sill_b" or "window_header" or "window_header_b"
                         or "destination_board" or "destination_board_hood" or "destination_digit")
-                        return color * 0.7f;
+                        return GroundVehicleDetails.Shade(color, 0.7f);
                     return kitName switch
                     {
                         "wheel_fl" or "wheel_fr" or "wheel_rl" or "wheel_rr"
@@ -731,7 +749,7 @@ namespace Airside.Presentation
                             or "tug_seat" or "tug_seat_back" or "tug_rollbar"
                             or "tug_rollbar_top" or "tug_rollbar_l" or "tug_rollbar_r"
                             or "tug_floor" or "tug_steering" or "tug_steering_wheel"
-                            or "counterweight" => color * 0.82f,
+                            or "counterweight" => GroundVehicleDetails.Shade(color, 0.82f),
                         "beacon" or "beacon_guard" => new Color(0.95f, 0.35f, 0.12f),
                         "headlight_l" or "headlight_r" => new Color(0.95f, 0.95f, 0.85f),
                         "taillight_l" or "taillight_r" => new Color(0.85f, 0.15f, 0.12f),
@@ -746,7 +764,7 @@ namespace Airside.Presentation
                             or "number_plate" or "fuel_hazard" or "hazard_chevron_1" or "hazard_chevron_2"
                             or "wiper" or "wiper_b" or "nose_round" or "tail_round"
                             or "body_panel_l" or "body_panel_r" or "skirt_l" or "skirt_r"
-                            => color * 0.7f,
+                            => GroundVehicleDetails.Shade(color, 0.7f),
                         "cargo_1" or "cargo_2" or "cargo_3" or "cargo_tag_1" or "cargo_tag_2"
                             or "cargo_bag_1a" or "cargo_bag_1b" or "cargo_bag_1c"
                             or "cargo_bag_2a" or "cargo_bag_2b" or "cargo_bag_2c"
@@ -768,7 +786,7 @@ namespace Airside.Presentation
                             or "cart_post_3fl" or "cart_post_3fr"
                             or "hitch_1" or "hitch_2" or "hitch_3"
                             or "hitch_pin_1" or "hitch_pin_2" or "hitch_pin_3"
-                            or "tow_pivot_1" or "tow_pivot_2" or "tow_pivot_3" => color * 0.6f,
+                            or "tow_pivot_1" or "tow_pivot_2" or "tow_pivot_3" => GroundVehicleDetails.Shade(color, 0.6f),
                         "seat_row_1" or "seat_row_2" or "seat_row_3" or "seat_row_4"
                             or "seat_back_1" or "seat_back_2" => new Color(0.35f, 0.38f, 0.42f),
                         _ => color
@@ -780,7 +798,7 @@ namespace Airside.Presentation
             {
                 ParentBlock(root, $"{name} body", Vector3.zero, scale, color);
                 ParentBlock(root, $"{name} cab", new Vector3(scale.x * 0.28f, scale.y * 0.42f, 0f),
-                    new Vector3(scale.x * 0.34f, scale.y * 0.62f, scale.z * 0.86f), color * 0.82f);
+                    new Vector3(scale.x * 0.34f, scale.y * 0.62f, scale.z * 0.86f), GroundVehicleDetails.Shade(color, 0.82f));
                 ParentBlock(root, $"{name} wheel FL", new Vector3(scale.x * 0.32f, -scale.y * 0.35f, scale.z * 0.42f),
                     new Vector3(0.28f, 0.35f, 0.18f), new Color(0.15f, 0.15f, 0.16f));
                 ParentBlock(root, $"{name} wheel FR", new Vector3(scale.x * 0.32f, -scale.y * 0.35f, -scale.z * 0.42f),
@@ -803,6 +821,7 @@ namespace Airside.Presentation
             }
 
             root.gameObject.SetActive(false);
+            GroundVehicleDetails.Build(root);
             return root;
         }
 

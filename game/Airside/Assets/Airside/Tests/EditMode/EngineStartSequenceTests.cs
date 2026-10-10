@@ -172,18 +172,18 @@ namespace Airside.Tests
             Assert.That(state.Beacon, Is.False);
         }
 
-        [TestCase(320)]
-        [TestCase(323)]
+        [TestCase(408)]
+        [TestCase(411)]
         public void PackagedBoardingStill_IsMidBoardingForStarterRegional(long delaySeconds)
         {
-            // remaining.sh boarding batch: tape@320 / human-ops@323 — mid-boarding Saab.
+            // remaining.sh boarding batch: tape@408 / human-ops@411 — mid-boarding Saab.
             var type = AircraftCatalogue.Saab340.Type;
             const PlayerBaseLevel level = PlayerBaseLevel.Starter;
             var preBoard = DeparturePrep.StageSecondsFor(type, DeparturePrepStage.Fuel, level)
                 + DeparturePrep.StageSecondsFor(type, DeparturePrepStage.Catering, level)
                 + DeparturePrep.StageSecondsFor(type, DeparturePrepStage.Baggage, level);
             var midBoard = preBoard + DeparturePrep.BoardingSecondsFor(type, level) / 2;
-            Assert.That(midBoard, Is.EqualTo(315));
+            Assert.That(midBoard, Is.EqualTo(403));
             Assert.That(delaySeconds, Is.InRange(midBoard - 15, midBoard + 15),
                 $"packaged {delaySeconds}s delay should land in mid-boarding for starter regional");
         }

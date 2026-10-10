@@ -152,7 +152,7 @@ namespace Airside.Tests
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(50)).Accepted, Is.False, "in the past");
 
             ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(500));
-            RunTo(clock, ops, 501);
+            RunTo(clock, ops, Math.Max(501, DeparturePrep.ReadyAtSeconds(plane) + 1));
             Assert.That(ops.ScheduleDeparture(plane, Code("PLO"), new SimulationTime(500)).Accepted, Is.False, "already taxiing");
             Assert.That(ops.CancelDeparture(plane).Accepted, Is.False);
 
@@ -343,10 +343,11 @@ namespace Airside.Tests
             ops.AddAirline(player);
             var bayPlane = ops.AddAircraft(player, "VH-PAA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
             var gatePlane = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing7378, new StableId("GATE-18"));
-            ops.ScheduleDeparture(bayPlane, Code("KGC"), new SimulationTime(600));
-            ops.ScheduleDeparture(gatePlane, Code("MEL"), new SimulationTime(600));
+            var departure = new SimulationTime(DeparturePrep.LeadSeconds(gatePlane.Type) + 120);
+            ops.ScheduleDeparture(bayPlane, Code("KGC"), departure);
+            ops.ScheduleDeparture(gatePlane, Code("MEL"), departure);
 
-            RunTo(clock, ops, 600);
+            RunTo(clock, ops, departure.ElapsedSeconds);
             Assert.That(bayPlane.State, Is.EqualTo(FleetState.TaxiOut));
             Assert.That(gatePlane.State, Is.EqualTo(FleetState.TaxiOut),
                 "a different apron's pushback should not be held up by the bay's release gate");

@@ -605,3 +605,7 @@ unsourced and flagged; none may ship until replaced.
 Runtime procedural bay leaves derived solely from the existing original Airside fuselage/fairing meshes (`AircraftLandingGearGeometry`). Source/generator: original project C#; no external visual asset or copied manufacturer geometry. Prompt: Bailey's fleet landing gear placement/doors/motion request. Licence/terms: original Airside project work, same terms as its input models. Cost: $0; attribution: Airside. Fallback: existing authored aircraft/gear meshes remain; missing or unreadable skin skips fitted leaves safely. Evidence: `docs/testing/landing-gear-2026-10-09/README.md`.
 
 Sky refinement #773: existing project-owned DirectionalSky shader only; original analytic opposing rose band and restrained palettes. No external source, cost or attribution; prior git shader/solid-colour sky fallback.
+
+### Flight crew and vehicle reuse — 10 October 2026
+
+The CHR-003 CC0 suit and ramp figures now also portray pilots, cabin attendants and service drivers. `FlightCrewUniform.cs` supplies original navy/teal palettes and a small pilot cap; `GroundVehicleDetails.cs` supplies original seated bone poses and vehicle lamp sources. No new downloaded asset, generator service or spending. Cost: $0; Quaternius voluntary credit remains. Original character/vehicle files remain the fallback; missing figures never change simulation timing. Native visual review pending. Existing VEH-001–004 model paths are retained; the service-vehicle tint fix affects runtime materials only.

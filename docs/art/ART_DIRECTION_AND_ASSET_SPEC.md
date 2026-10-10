@@ -563,3 +563,7 @@ weather and altitude suppress clear-sky effects. Existing solid-colour sky is fa
 Refinement #773 adds restrained opposing rose and peach dawn; baseline native frames
 inspected; refined clean Mac build and cycle/opposing/weather frames inspected. GPU/seasonal
 limits: `docs/testing/sky-refinement-2026-10-09/README.md`. Decision: `2026-10-09-directional-twilight-sky`.
+
+## Flight crew and service driver extension — 10 October 2026
+
+Reuse CHR-003 suit/ramp rigs at true human scale. Pilots wear restrained navy with a small original cap; cabin crew use teal/navy. Drivers use existing hi-vis. Original uniform details live in Presentation, with no new image/asset tree. Existing VEH models retain their silhouettes and palette; bodywork is opaque, glass is explicitly tinted, and small lamp sources are attached to authored lamps. Native review pending.

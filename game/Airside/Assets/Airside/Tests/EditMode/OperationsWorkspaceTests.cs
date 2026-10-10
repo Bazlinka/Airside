@@ -342,7 +342,7 @@ namespace Airside.Tests
             var departAt = new SimulationTime(DeparturePrep.TotalSeconds(plane.Type) + 60);
             Assert.That(ops.ScheduleDeparture(plane, HudTestAirline.Code("KGC"), departAt).Accepted, Is.True);
             clock.Set(new SimulationTime(plane.PrepStartedAt!.Value.ElapsedSeconds
-                + DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds + 60));
+                + DeparturePrep.StageSecondsFor(plane.Type, DeparturePrepStage.Fuel, plane.BaseLevel) + DeparturePrep.CateringSeconds + 60));
             ops.Update();
 
             var model = new OperationsWorkspaceModel();

@@ -49,7 +49,7 @@ namespace Airside.Tests
             var (clock, ops, aircraft) = PlayerOnly();
             DestinationCatalogue.TryFind("KGC", out var kingscote);
             Assert.That(ops.ScheduleDeparture(aircraft, kingscote, new SimulationTime(400)).Accepted, Is.True);
-            clock.Set(new SimulationTime(401));
+            clock.Set(new SimulationTime(System.Math.Max(400, DeparturePrep.ReadyAtSeconds(aircraft)) + 1));
             ops.Update();
             Assert.That(aircraft.State, Is.Not.EqualTo(FleetState.AtStand));
 

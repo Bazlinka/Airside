@@ -146,6 +146,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Add pilot inspections, flight/cabin boarding and service drivers; improve vehicle opacity, steering, clock-driven movement and lamps.
+
 - Add larger working ground teams; baggage carrying workload and equipment clearing gate player turnaround readiness.
 
 - 2026-10-09 — #773: softer peach dawn, restrained sunset amber, opposing rose twilight band and cooler blue-hour sky.

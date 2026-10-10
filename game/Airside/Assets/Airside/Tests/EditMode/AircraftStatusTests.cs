@@ -86,7 +86,7 @@ namespace Airside.Tests
             var prepStart = plane.PrepStartedAt!.Value.ElapsedSeconds;
 
             Assert.That(AircraftStatus.TagPhase(plane, new SimulationTime(prepStart)), Is.EqualTo("fuelling 0%"));
-            Assert.That(AircraftStatus.TagPhase(plane, new SimulationTime(prepStart + DeparturePrep.FuelSeconds / 2)),
+            Assert.That(AircraftStatus.TagPhase(plane, new SimulationTime(prepStart + DeparturePrep.StageSecondsFor(plane.Type, DeparturePrepStage.Fuel, plane.BaseLevel) / 2)),
                 Is.EqualTo("fuelling 50%"));
             Assert.That(AircraftStatus.TagPhase(plane, new SimulationTime(prepStart + DeparturePrep.TotalSeconds(plane.Type))),
                 Is.EqualTo("ready"));

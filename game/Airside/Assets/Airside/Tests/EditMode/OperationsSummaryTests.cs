@@ -112,7 +112,7 @@ namespace Airside.Tests
             var total = DeparturePrep.TotalSeconds(plane.Type, ops.CareerState.BaseLevel);
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), clock.Now.Advance(total + 120)).Accepted, Is.True);
             clock.Set(new SimulationTime(plane.PrepStartedAt.Value.ElapsedSeconds
-                + DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds + 10));
+                + DeparturePrep.StageSecondsFor(plane.Type, DeparturePrepStage.Fuel, plane.BaseLevel) + DeparturePrep.CateringSeconds + 10));
 
             var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock,
                 ops.CareerState);

@@ -47,6 +47,19 @@ realistic overheads. Bailey left the choice to the team ("up to you"), and this 
 - **Not yet done:** daily lease and insurance charges, the bank loan and its recovery path, HUD wording that says "deposit" and "lease", and a native
   check that seven-digit amounts fit every HUD control. Until the daily charges land there is no running cost for holding an aircraft, as before.
 
+## Step 2 landed (10 Oct 2026): daily lease and insurance, save v25
+
+- Every Adelaide day each player aircraft costs lease plus insurance (`FlightCostModel.StandingPerDay`); the founding Saab 340 is owned and pays
+  insurance only. Charged by day index in `AirlineOperations.ChargeStandingCosts`, so an away catch-up pays each missed day once and stepping
+  the clock in pieces gives the same result. Cash never goes below zero: a shortfall is reported ("only $X was available"); the bank loan, which
+  would carry a shortfall, is **not built yet**.
+- Save `CurrentVersion` 25 adds the last day paid. Older saves are not billed retroactively; the first day seen after loading is the start.
+- Fleet cards show "$X deposit" and "lease $Y/day"; the operations line shows leases per day.
+- Evidence: 8 `StandingCostTests`; casual `CareerBot` (seed 2, 100 h) Regional 11.2 h, Domestic 33.0 h, lowest cash A$44k (before: A$59k).
+- **Open:** a competent `CareerBot` (seed 1, 150 h) stalled on this branch after the ground-crew merge (3 aircraft, 10 rotations, "waiting for
+  a stand: every regional bay is in use"). The same bot ran fine on step 1 before that merge, and the comparison run on current `main` did not
+  complete, so the cause is unattributed. Treat the competent-bot result as unverified until it is rerun.
+
 ### Real `CareerBot` comparison (Standard difficulty, 150 open hours, seed 1; old economy = `main` before this change)
 
 | | Regional | Domestic | International | Fleet at 150 h | Cash at 150 h |

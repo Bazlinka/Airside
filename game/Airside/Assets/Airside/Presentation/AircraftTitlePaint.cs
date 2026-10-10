@@ -183,9 +183,9 @@ namespace Airside.Presentation
             if (Is(type, AircraftType.Boeing78710))
                 return new AircraftIdentityMarkingLayout(2.36f, 7.34f, -8.95f, 2.54f, 7.04f, -57.75f, 0.233f, 0.101f, 34.77f, 28.07f, 23.22f);
             if (Is(type, AircraftType.Boeing7478))
-                return new AircraftIdentityMarkingLayout(2.19f, 10.57f, -7.90f, 2.39f, 10.23f, -12.20f, 0.254f, 0.106f, 33.34f, 28.28f, 4.10f);
+                return new AircraftIdentityMarkingLayout(2.19f, 10.57f, -7.90f, 3.01f, 6.48f, -61.25f, 0.254f, 0.106f, 33.34f, 11.47f, 4.10f);
             if (Is(type, AircraftType.AirbusA380800))
-                return new AircraftIdentityMarkingLayout(2.02f, 9.71f, -7.88f, 2.06f, 9.68f, -60.68f, 0.136f, 0.125f, 51.31f, 50.64f, 24.73f);
+                return new AircraftIdentityMarkingLayout(1.84f, 9.85f, -7.88f, 2.06f, 9.68f, -60.68f, 0.196f, 0.125f, 55.02f, 50.64f, 24.73f);
             // </generated title layout>
             // The Bell's cabin is glazed and its sliding doors are large, so its marks sit on the tail boom
             // (authored in generate-air-017-bell-412.py: boom half-width ~0.4-0.6 m, centre height ~2.1-2.4 m).
